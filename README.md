@@ -8,12 +8,64 @@ tage stilling på stedet.
 
 ## Problemformulering
 
-Hvordan kan der udvikles et system, som giver kunden mulighed for at købe billetter og overveje
-relevante tilkøb inden ankomst?
+Hvordan kan der udvikles et sikkert billethåndteringssystem, som giver kunden mulighed for at købe
+billetter og overveje relevante tilkøb inden ankomst?
 
 ## Brugerhistorier
 
+Som kunde ønsker jeg at kunne købe en billet inden ankomst, så jeg undgår kø ved billetlugen.
+Som kunde ønsker jeg at kunne vælge tilkøb, så jeg kan planlægge mit besøg på forhånd.
+Som kunde ønsker jeg at kunne betale online, så købet kan gennemføres hjemmefra.
+Som kunde ønsker jeg at modtage min billet digitalt, så jeg nemt kan fremvise den ved ankomst.
+
+Som udbyder ønsker jeg at kunne oprette billetter, så kunderne kan købe dem online.
+Som udbyder ønsker jeg at kunne oprette tilkøb, så kunderne kan købe ekstra produkter eller ydelser.
+Som udbyder ønsker jeg at kunne validere billetter, så jeg kan kontrollere dem ved kundens ankomst.
+
 ## Analyse
+
+1. **Hvad er formålet med et billethåndteringssystem?**
+  Formålet er at fjerne flaskehalsen ved billetlugen ved at digitalisere køb og validering af billetter.
+
+2. **Hvilke undersystemer indeholder systemet?**
+  Booking og validering.
+
+3. **Hvad er den generaliserede betegnelse for systemet?**
+  Adgangsbevis.
+
+4. **Hvilke primitiver indeholder det generaliserede system?**
+  Dokumentation for adgang.
+
+5. **Hvordan er primitiverne struktureret?**
+  Som en liste.
+
+### Navneord
+
+* Kunde
+* Udbyder
+* Billet
+* Ankomst
+* Kø
+* Billetluge
+* Tilkøb
+* Besøg
+* Køb
+* Produkt
+* Ydelse
+
+### Udsagnsord
+
+* Købe
+* Undgå
+* Vælge
+* Planlægge
+* Betale
+* Gennemføre
+* Modtage
+* Fremvise
+* Oprette
+* Validere
+* Kontrollere
 
 ### Domænemodel
 
