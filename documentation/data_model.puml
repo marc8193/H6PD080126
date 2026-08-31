@@ -4,7 +4,7 @@ skinparam dpi 400
 
 class Bruger {
   id: Integer
-  type: Enum
+  type: Byte
   navn: String
   email: String
 }
