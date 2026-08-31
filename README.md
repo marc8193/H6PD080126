@@ -28,7 +28,7 @@ billetter og overveje relevante tilkøb inden ankomst?
   Formålet er at fjerne flaskehalsen ved billetlugen ved at digitalisere køb og validering af billetter.
 
 2. **Hvilke undersystemer indeholder systemet?**
-  Booking og validering.
+  Brugerhåndtering, Booking og validering.
 
 3. **Hvad er den generaliserede betegnelse for systemet?**
   Adgangsbevis.
@@ -68,10 +68,12 @@ billetter og overveje relevante tilkøb inden ankomst?
 * Kontrollere
 
 ### Domænemodel
+<img alt="Domain Model" src="documentation/domain_model.png" width="33%" />
 
 ## Design
 
 ### Datamodel
+<img alt="Data Model" src="documentation/data_model.png" width="33%" />
 
 ### Klient
 

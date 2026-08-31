@@ -1,0 +1,55 @@
+@startuml
+skinparam linetype ortho
+skinparam dpi 400
+
+class Bruger {
+  id: Integer
+  type: Enum
+  navn: String
+  email: String
+}
+
+class Afgang {
+  id: Integer
+  udbyder_id: FK
+  tidspunkt: Datetime
+  udrejse: Boolean
+}
+
+class Billet {
+  id: Integer
+  afgang_id: FK
+  kunde_id: FK
+}
+
+class Tilkøb {
+  id: Integer
+  navn: String
+}
+
+class BilletTilkøb {
+  billet_id: FK
+  tilkøb_id: FK
+}
+
+class Køretøj {
+  id: Integer
+  registreringsnummer: String
+}
+
+class BilletKøretøj {
+  billet_id: FK
+  køretøj_id: FK
+}
+
+Bruger "1" -- "0..*" Afgang: Udbyder
+Afgang "1" -- "1..*" Billet
+Bruger "1" -- "1..*" Billet: Kunde
+
+Billet "1" -- "0..*" BilletTilkøb
+Tilkøb "1" -- "0..*" BilletTilkøb
+
+Billet "1" -- "0..*" BilletKøretøj
+Køretøj "1" -- "0..*" BilletKøretøj
+
+@enduml

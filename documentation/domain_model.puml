@@ -1,0 +1,18 @@
+@startuml
+skinparam linetype ortho
+skinparam dpi 400
+
+rectangle Udbyder
+rectangle Afgang
+rectangle Kunde
+rectangle Billet
+rectangle Tilkøb
+rectangle Køretøj
+
+Udbyder "1" -- "0..*" Afgang
+Afgang "1" -- "1..*" Billet
+Kunde "1" -- "1..*" Billet
+Billet "0..*" -- "0..*" Tilkøb
+Billet "0..*" -- "0..*" Køretøj
+
+@enduml
