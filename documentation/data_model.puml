@@ -20,7 +20,8 @@ class Afgang {
 class Billet {
   id: Integer
   afgang_id: FK
-  kunde_id: FK
+  kunde_id: FK nullable
+  registreringsnummer: String nullable
 }
 
 class Tilkøb {
@@ -33,24 +34,11 @@ class Billet_Tilkøb {
   tilkøb_id: FK
 }
 
-class Køretøj {
-  id: Integer
-  registreringsnummer: String
-}
-
-class Billet_Køretøj {
-  billet_id: FK
-  køretøj_id: FK
-}
-
-Bruger "1" -- "0..*" Afgang
+Bruger "1" -- "0..*" Afgang: Udbyder
 Afgang "1" -- "1..*" Billet
-Bruger "1" -- "1..*" Billet
+Bruger "0..1" -- "1..*" Billet: Kunde
 
 Billet "1" -- "0..*" Billet_Tilkøb
 Tilkøb "1" -- "0..*" Billet_Tilkøb
-
-Billet "1" -- "0..*" Billet_Køretøj
-Køretøj "1" -- "0..*" Billet_Køretøj
 
 @enduml

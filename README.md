@@ -89,33 +89,30 @@ billetter og overveje relevante tilkøb inden ankomst?
 
 ### API
 
-| **Slutpunkt**       | **Handling** | **Beskrivelse**                                       | **Parameter**         | **Type** | **Detaljer**                                              |
-|---------------------|--------------|-------------------------------------------------------|-----------------------|----------|-----------------------------------------------------------|
-| brugere             | Opret        | Opret en ny bruger.                                   | `type`                | enum     | Brugerens type, som kan være udbyder eller kunde.         |
-|                     |              |                                                       | `navn`                | string   | Brugerens navn.                                           |
-|                     |              |                                                       | `email`               | string   | Brugerens e-mailadresse.                                  |
-|                     | Læs          | Hent en bruger.                                       | `id`                  | integer  | Unikt ID på brugeren.                                     |
-|                     | Opdater      | Opdater en eksisterende bruger.                       | `id`                  | integer  | Unikt ID på brugeren, der skal opdateres.                 |
-|                     |              |                                                       | `navn`                | string   | Brugerens navn.                                           |
-| afgange             | Opret        | Opret en ny afgang.                                   | `udbyder_id`          | integer  | Unikt ID på udbyderen.                                    |
-|                     |              |                                                       | `tidspunkt`           | datetime | Tidspunktet hvor båden lægger fra land (ISO 8601-format). |
-|                     |              |                                                       | `udrejse`             | byte     | Angiver hvor båden sejler fra.                            |
-|                     | Læs          | Hent en liste over afgange med valgfri sideinddeling. | `antal`               | integer  | Maksimalt antal afgange, der returneres.                  |
-|                     | Opdater      | Opdater en eksisterende afgang.                       | `id`                  | integer  | Unikt ID på afgangen, der skal opdateres.                 |
-|                     |              |                                                       | `tidspunkt`           | datetime | Tidspunktet hvor båden lægger fra land (ISO 8601-format). |
-|                     |              |                                                       | `udrejse`             | byte     | Angiver hvor båden sejler fra.                            |
-|                     |              |                                                       | `aflyst`              | byte     | Angiver om afgangen er aflyst.                            |
-| billetter           | Opret        | Opret en ny billet.                                   | `afgang_id`           | integer  | Unikt ID på afgangen.                                     |
-|                     | Læs          | Hent en billet.                                       | `id`                  | integer  | Unikt ID på billetten.                                    |
-|                     | Opdater      | Tilknyt en kunde til en billet.                       | `id`                  | integer  | Unikt ID på billetten.                                    |
-|                     |              |                                                       | `kunde_id`            | integer  | Unikt ID på kunden.                                       |
-| tilkøb              | Opret        | Opret et nyt tilkøb.                                  | `navn`                | string   | Navn på tilkøbet.                                         |
-|                     | Læs          | Hent en liste over tilkøb.                            | `antal`               | integer  | Maksimalt antal tilkøb, der returneres.                   |
-| køretøjer           | Opret        | Opret et nyt køretøj.                                 | `registreringsnummer` | string   | Køretøjets registreringsnummer.                           |
-|                     | Læs          | Hent et køretøj.                                      | `id`                  | integer  | Unikt ID på køretøjet.                                    |
-| billetter/tilkøb    | Opret        | Tilknyt et tilkøb til en billet.                      | `tilkøb_id`           | integer  | Unikt ID på tilkøbet, der skal tilknyttes.                |
-|                     |              |                                                       | `billet_id`           | integer  | Unikt ID på billetten.                                    |
-|                     | Læs          | Hent alle tilkøb tilknyttet en billet.                | `billet_id`           | integer  | Unikt ID på billetten.                                    |
-| billetter/køretøjer | Opret        | Tilknyt et køretøj til en billet.                     | `køretøj_id`          | integer  | Unikt ID på køretøjet, der skal tilknyttes.               |
-|                     |              |                                                       | `billet_id`           | integer  | Unikt ID på billetten.                                    |
-|                     | Læs          | Hent alle køretøjer tilknyttet en billet.             | `billet_id`           | integer  | Unikt ID på billetten.                                    |
+| **Slutpunkt**    | **Handling** | **Beskrivelse**                                           | **Parameter**         | **Type** | **Detaljer**                                                                      |
+|------------------|--------------|-----------------------------------------------------------|-----------------------|----------|-----------------------------------------------------------------------------------|
+| brugere          | Opret        | Opret en ny bruger.                                       | `type`                | enum     | Brugerens type, som kan være udbyder eller kunde.                                 |
+|                  |              |                                                           | `navn`                | string   | Brugerens navn.                                                                   |
+|                  |              |                                                           | `email`               | string   | Brugerens e-mailadresse.                                                          |
+|                  | Læs          | Hent en bruger.                                           | `id`                  | integer  | Unikt ID på brugeren.                                                             |
+|                  | Opdater      | Opdater en eksisterende bruger.                           | `id`                  | integer  | Unikt ID på brugeren, der skal opdateres.                                         |
+|                  |              |                                                           | `navn`                | string   | Brugerens navn.                                                                   |
+| afgange          | Opret        | Opret en ny afgang.                                       | `udbyder_id`          | integer  | Unikt ID på udbyderen.                                                            |
+|                  |              |                                                           | `tidspunkt`           | datetime | Tidspunktet hvor båden lægger fra land (ISO 8601-format).                         |
+|                  |              |                                                           | `udrejse`             | byte     | Angiver hvor båden sejler fra.                                                    |
+|                  | Læs          | Hent en liste over afgange med valgfri sideinddeling.     | `antal`               | integer  | Maksimalt antal afgange, der returneres.                                          |
+|                  | Opdater      | Opdater en eksisterende afgang.                           | `id`                  | integer  | Unikt ID på afgangen, der skal opdateres.                                         |
+|                  |              |                                                           | `tidspunkt`           | datetime | Tidspunktet hvor båden lægger fra land (ISO 8601-format).                         |
+|                  |              |                                                           | `udrejse`             | byte     | Angiver hvor båden sejler fra.                                                    |
+|                  |              |                                                           | `aflyst`              | byte     | Angiver om afgangen er aflyst.                                                    |
+| billetter        | Opret        | Opret en ny billet.                                       | `afgang_id`           | integer  | Unikt ID på afgangen.                                                             |
+|                  |              |                                                           | `registreringsnummer` | string   | Køretøjets registreringsnummer. Valgfri, hvis billetten ikke omfatter et køretøj. |
+|                  | Læs          | Hent en billet.                                           | `id`                  | integer  | Unikt ID på billetten.                                                            |
+|                  | Opdater      | Opdater kunde og/eller køretøj på en eksisterende billet. | `id`                  | integer  | Unikt ID på billetten.                                                            |
+|                  |              |                                                           | `kunde_id`            | integer  | Unikt ID på kunden.                                                               |
+|                  |              |                                                           | `registreringsnummer` | string   | Køretøjets registreringsnummer. Valgfri, hvis billetten ikke omfatter et køretøj. |
+| tilkøb           | Opret        | Opret et nyt tilkøb.                                      | `navn`                | string   | Navn på tilkøbet.                                                                 |
+|                  | Læs          | Hent en liste over tilkøb.                                | `antal`               | integer  | Maksimalt antal tilkøb, der returneres.                                           |
+| billetter/tilkøb | Opret        | Tilknyt et tilkøb til en billet.                          | `tilkøb_id`           | integer  | Unikt ID på tilkøbet, der skal tilknyttes.                                        |
+|                  |              |                                                           | `billet_id`           | integer  | Unikt ID på billetten.                                                            |
+|                  | Læs          | Hent alle tilkøb tilknyttet en billet.                    | `billet_id`           | integer  | Unikt ID på billetten.                                                            |
