@@ -13,7 +13,8 @@ class Afgang {
   id: Integer
   udbyder_id: FK
   tidspunkt: Datetime
-  udrejse: Boolean
+  udrejse: Byte
+  aflyst: Byte
 }
 
 class Billet {
@@ -27,7 +28,7 @@ class Tilkøb {
   navn: String
 }
 
-class BilletTilkøb {
+class Billet_Tilkøb {
   billet_id: FK
   tilkøb_id: FK
 }
@@ -37,7 +38,7 @@ class Køretøj {
   registreringsnummer: String
 }
 
-class BilletKøretøj {
+class Billet_Køretøj {
   billet_id: FK
   køretøj_id: FK
 }
@@ -46,10 +47,10 @@ Bruger "1" -- "0..*" Afgang
 Afgang "1" -- "1..*" Billet
 Bruger "1" -- "1..*" Billet
 
-Billet "1" -- "0..*" BilletTilkøb
-Tilkøb "1" -- "0..*" BilletTilkøb
+Billet "1" -- "0..*" Billet_Tilkøb
+Tilkøb "1" -- "0..*" Billet_Tilkøb
 
-Billet "1" -- "0..*" BilletKøretøj
-Køretøj "1" -- "0..*" BilletKøretøj
+Billet "1" -- "0..*" Billet_Køretøj
+Køretøj "1" -- "0..*" Billet_Køretøj
 
 @enduml
