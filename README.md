@@ -13,14 +13,14 @@ billetter og overveje relevante tilkøb inden ankomst?
 
 ## Brugerhistorier
 
-Som kunde ønsker jeg at kunne købe en billet inden ankomst, så jeg undgår kø ved billetlugen.
-Som kunde ønsker jeg at kunne vælge tilkøb, så jeg kan planlægge mit besøg på forhånd.
-Som kunde ønsker jeg at kunne betale online, så købet kan gennemføres hjemmefra.
-Som kunde ønsker jeg at modtage min billet digitalt, så jeg nemt kan fremvise den ved ankomst.
+1. Som kunde ønsker jeg at kunne købe en billet inden ankomst, så jeg undgår kø ved billetlugen.
+2. Som kunde ønsker jeg at kunne vælge tilkøb, så jeg kan planlægge mit besøg på forhånd.
+3. Som kunde ønsker jeg at kunne betale online, så købet kan gennemføres hjemmefra.
+4. Som kunde ønsker jeg at modtage min billet digitalt, så jeg nemt kan fremvise den ved ankomst.
 
-Som udbyder ønsker jeg at kunne oprette billetter, så kunderne kan købe dem online.
-Som udbyder ønsker jeg at kunne oprette tilkøb, så kunderne kan købe ekstra produkter eller ydelser.
-Som udbyder ønsker jeg at kunne validere billetter, så jeg kan kontrollere dem ved kundens ankomst.
+6. Som udbyder ønsker jeg at kunne oprette billetter, så kunderne kan købe dem online.
+7. Som udbyder ønsker jeg at kunne oprette tilkøb, så kunderne kan købe ekstra produkter eller ydelser.
+8. Som udbyder ønsker jeg at kunne validere billetter, så jeg kan kontrollere dem ved kundens ankomst.
 
 ## Analyse
 
