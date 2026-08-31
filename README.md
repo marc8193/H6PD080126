@@ -77,8 +77,14 @@ billetter og overveje relevante tilkøb inden ankomst?
 
 ### Klient
 
+1. Præsentation: Vis data til brugeren.
+2. Indsamling: Registrér brugerinteraktioner til videre behandling.
+3. Udveksling: Håndtér datakommunikation med serveren via API'et.
+
 ### Server
 
-### Snitflade
+1. Præsentation: Eksponér API'et for klienten.
+2. Validering: Kontrollér indgående data for at forhindre sikkerhedssårbarheder såsom SQL-injektion.
+3. Lagring: Gem data i databasen.
 
-## Kilder
+### API
