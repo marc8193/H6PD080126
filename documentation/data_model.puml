@@ -42,9 +42,9 @@ class BilletKøretøj {
   køretøj_id: FK
 }
 
-Bruger "1" -- "0..*" Afgang: Udbyder
+Bruger "1" -- "0..*" Afgang
 Afgang "1" -- "1..*" Billet
-Bruger "1" -- "1..*" Billet: Kunde
+Bruger "1" -- "1..*" Billet
 
 Billet "1" -- "0..*" BilletTilkøb
 Tilkøb "1" -- "0..*" BilletTilkøb
