@@ -64,10 +64,33 @@ class Billet
   kategori: Kategori
 }
 
+enum Variant
+{
+  Bil
+  Lastbil
+  Cykel
+}
+
+class Køretøj
+{
+  id: Integer
+  billet_id: FK
+  variant: Variant
+  identifikationsnummer: String
+}
+
+class Person
+{
+  id: Integer
+  billet_id: FK
+  fødselsdato: Date
+}
+
 Bruger -- Rolle
 Afgang -- Udrejse
 Billet -- Kategori
 Kapacitet -- Kategori
+Køretøj -- Variant
 
 Bruger "1" -right- "0..*" Afgang: Operatør
 Færge "1" -- "0..*" Afgang
@@ -75,5 +98,8 @@ Færge "1" -- "1..*" Kapacitet
 
 Afgang "1" -- "0..*" Billet
 Bruger "1" -- "1..*" Billet: Kunde
+
+Billet "1" -- "0..1" Køretøj
+Billet "1" -- "0..1" Person
 
 @enduml
