@@ -20,7 +20,7 @@ if [[ "${main:-0}" == "1" ]]; then
   did_build=1;
 fi
 if [[ "${docs:-0}" == "1" ]]; then
-  did_build=1 && plantuml -tpng ../documentation/*.puml;
+  did_build=1 && plantuml -tpng ../documentation/*.puml -o ../public;
 fi
 cd ..
 

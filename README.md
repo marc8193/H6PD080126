@@ -70,12 +70,12 @@ billetter og overveje relevante tilkøb inden ankomst?
 * Kontrollere
 
 ### Domænemodel
-<img alt="Domain Model" src="documentation/domain_model.png" width="50%" />
+<img alt="Domain Model" src="public/domain_model.png" width="50%" />
 
 ## Design
 
 ### Datamodel
-<img alt="Data Model" src="documentation/data_model.png" width="50%" />
+<img alt="Data Model" src="public/data_model.png" width="50%" />
 
 ### Klient
 
