@@ -2,17 +2,39 @@
 skinparam linetype ortho
 skinparam dpi 400
 
-rectangle Udbyder
-rectangle Afgang
-rectangle Kunde
-rectangle Billet
-rectangle Tilkøb
-rectangle Køretøj
+rectangle Operatør
 
-Udbyder "1" -- "0..*" Afgang
+rectangle Afgang
+rectangle Færge
+
+rectangle Kunde
+
+rectangle Billet
+rectangle Personbillet
+rectangle Kæledyrsbillet
+rectangle Morgenmadsbillet
+rectangle Førsteklassebillet
+rectangle Køretøjsbillet
+rectangle Bil
+rectangle Lastbil
+rectangle Cykel
+
+Operatør "1" -- "1..*" Afgang
+Operatør "1" -- "1..*" Færge
+
+Færge "1" -- "0..*" Afgang
 Afgang "1" -- "1..*" Billet
+
 Kunde "1" -- "1..*" Billet
-Billet "0..*" -- "0..*" Tilkøb
-Billet "0..*" -- "0..*" Køretøj
+
+Personbillet -up-|> Billet
+Kæledyrsbillet -up-|> Billet
+Morgenmadsbillet -up-|> Billet
+Førsteklassebillet -up-|> Billet
+Køretøjsbillet -up-|> Billet
+
+Cykel -up-|> Køretøjsbillet
+Bil -up-|> Køretøjsbillet
+Lastbil -up-|> Køretøjsbillet
 
 @enduml

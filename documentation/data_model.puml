@@ -1,44 +1,79 @@
 @startuml
 skinparam linetype ortho
 skinparam dpi 400
+skinparam nodesep 100
 
-class Bruger {
+enum Rolle
+{
+  Operatør
+  Kunde
+}
+
+class Bruger
+{
   id: Integer
-  type: Byte
+  rolle: Rolle
   navn: String
   email: String
 }
 
-class Afgang {
-  id: Integer
-  udbyder_id: FK
-  tidspunkt: Datetime
-  udrejse: Byte
-  aflyst: Byte
+enum Udrejse
+{
+  Frederikshavn
+  Læsø
 }
 
-class Billet {
-  id: Integer
-  afgang_id: FK
-  kunde_id: FK nullable
-  registreringsnummer: String nullable
-}
-
-class Tilkøb {
+class Færge
+{
   id: Integer
   navn: String
 }
 
-class Billet_Tilkøb {
-  billet_id: FK
-  tilkøb_id: FK
+enum Kategori
+{
+  Person
+  Kæledyr
+  Morgenmad
+  Førsteklasse
+  Køretøj
 }
 
-Bruger "1" -- "0..*" Afgang: Udbyder
-Afgang "1" -- "1..*" Billet
-Bruger "0..1" -- "1..*" Billet: Kunde
+class Kapacitet
+{
+  id: Integer
+  færge_id: FK
+  kategori: Kategori
+  maksimum: Integer
+}
 
-Billet "1" -- "0..*" Billet_Tilkøb
-Tilkøb "1" -- "0..*" Billet_Tilkøb
+class Afgang
+{
+  id: Integer
+  operatør_id: FK
+  færge_id: FK
+  udrejse: Udrejse
+  tidspunkt: Datetime
+  aflyst: Byte
+}
+
+class Billet
+{
+  id: Integer
+  afgang_id: FK
+  kunde_id: FK
+  kategori: Kategori
+}
+
+Bruger -- Rolle
+Afgang -- Udrejse
+Billet -- Kategori
+Kapacitet -- Kategori
+
+Bruger "1" -right- "0..*" Afgang: Operatør
+Færge "1" -- "0..*" Afgang
+Færge "1" -- "1..*" Kapacitet
+
+Afgang "1" -- "0..*" Billet
+Bruger "1" -- "1..*" Billet: Kunde
 
 @enduml
