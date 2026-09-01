@@ -91,39 +91,48 @@ billetter og overveje relevante tilkøb inden ankomst?
 
 ### API
 
-| **Slutpunkt** | **Handling** | **Beskrivelse**                                | **Parameter** | **Type** | **Detaljer**                                                                      |
-|---------------|--------------|------------------------------------------------|---------------|----------|-----------------------------------------------------------------------------------|
-| brugere       | Opret        | Opret en ny bruger.                            | `rolle`       | enum     | Brugerens rolle: `Operatør` eller `Kunde`.                                        |
-|               |              |                                                | `navn`        | string   | Brugerens navn.                                                                   |
-|               |              |                                                | `email`       | string   | Brugerens e-mailadresse.                                                          |
-|               | Læs          | Hent en bruger.                                | `id`          | integer  | Unikt ID på brugeren.                                                             |
-|               | Opdater      | Opdater en eksisterende bruger.                | `id`          | integer  | Unikt ID på brugeren.                                                             |
-|               |              |                                                | `rolle`       | enum     | Brugerens rolle: `Operatør` eller `Kunde`.                                        |
-|               |              |                                                | `navn`        | string   | Brugerens navn.                                                                   |
-| færger        | Opret        | Opret en ny færge.                             | `navn`        | string   | Færgens navn.                                                                     |
-|               | Læs          | Hent en liste over færger.                     | `antal`       | integer  | Maksimalt antal færger, der returneres.                                           |
-|               | Læs          | Hent en færge.                                 | `id`          | integer  | Unikt ID på færgen.                                                               |
-|               | Opdater      | Opdater en eksisterende færge.                 | `id`          | integer  | Unikt ID på færgen.                                                               |
-|               |              |                                                | `navn`        | string   | Færgens navn.                                                                     |
-| kapaciteter   | Opret        | Opret en kapacitetsbegrænsning for en færge.   | `færge_id`    | integer  | Unikt ID på færgen.                                                               |
-|               |              |                                                | `kategori`    | enum     | Kategorien: `Person`, `Kæledyr`, `Morgenmad`, `Førsteklasse` eller `Køretøj`.     |
-|               |              |                                                | `maksimum`    | integer  | Færgens maksimale kapacitet for kategorien.                                       |
-|               | Læs          | Hent kapacitetsbegrænsninger for en færge.     | `færge_id`    | integer  | Unikt ID på færgen.                                                               |
-|               | Opdater      | Opdater en eksisterende kapacitetsbegrænsning. | `id`          | integer  | Unikt ID på kapacitetsbegrænsningen.                                              |
-|               |              |                                                | `kategori`    | enum     | Kategorien: `Person`, `Kæledyr`, `Morgenmad`, `Førsteklasse` eller `Køretøj`.     |
-|               |              |                                                | `maksimum`    | integer  | Færgens maksimale kapacitet for kategorien.                                       |
-| afgange       | Opret        | Opret en ny afgang.                            | `operatør_id` | integer  | Unikt ID på operatøren.                                                           |
-|               |              |                                                | `færge_id`    | integer  | Unikt ID på færgen.                                                               |
-|               |              |                                                | `udrejse`     | enum     | Udrejse: `Frederikshavn` eller `Læsø`.                                            |
-|               |              |                                                | `tidspunkt`   | datetime | Tidspunktet for afgang i ISO 8601-format.                                         |
-|               |              |                                                | `aflyst`      | boolean  | Angiver, om afgangen er aflyst.                                                   |
-|               | Læs          | Hent en liste over afgange.                    | `antal`       | integer  | Maksimalt antal afgange, der returneres.                                          |
-|               | Opdater      | Opdater en eksisterende afgang.                | `id`          | integer  | Unikt ID på afgangen.                                                             |
-|               |              |                                                | `færge_id`    | integer  | Unikt ID på færgen.                                                               |
-|               |              |                                                | `udrejse`     | enum     | Udrejse: `Frederikshavn` eller `Læsø`.                                            |
-|               |              |                                                | `tidspunkt`   | datetime | Tidspunktet for afgang i ISO 8601-format.                                         |
-|               |              |                                                | `aflyst`      | boolean  | Angiver, om afgangen er aflyst.                                                   |
-| billetter     | Opret        | Opret en ny billet.                            | `afgang_id`   | integer  | Unikt ID på afgangen.                                                             |
-|               |              |                                                | `kunde_id`    | integer  | Unikt ID på kunden.                                                               |
-|               |              |                                                | `kategori`    | enum     | Billetkategori: `Person`, `Kæledyr`, `Morgenmad`, `Førsteklasse` eller `Køretøj`. |
-|               | Læs          | Hent billetter til en kunde.                   | `kunde_id`    | integer  | Unikt ID på kunden.                                                               |
+| **Slutpunkt** | **Handling** | **Beskrivelse**                                | **Parameter**           | **Type** | **Detaljer**                                                                      |
+|---------------|--------------|------------------------------------------------|-------------------------|----------|-----------------------------------------------------------------------------------|
+| brugere       | Opret        | Opret en ny bruger.                            | `rolle`                 | enum     | Brugerens rolle: `Operatør` eller `Kunde`.                                        |
+|               |              |                                                | `navn`                  | string   | Brugerens navn.                                                                   |
+|               |              |                                                | `email`                 | string   | Brugerens e-mailadresse.                                                          |
+|               | Læs          | Hent en bruger.                                | `id`                    | integer  | Unikt ID på brugeren.                                                             |
+|               | Opdater      | Opdater en eksisterende bruger.                | `id`                    | integer  | Unikt ID på brugeren.                                                             |
+|               |              |                                                | `rolle`                 | enum     | Brugerens rolle: `Operatør` eller `Kunde`.                                        |
+|               |              |                                                | `navn`                  | string   | Brugerens navn.                                                                   |
+| færger        | Opret        | Opret en ny færge.                             | `navn`                  | string   | Færgens navn.                                                                     |
+|               | Læs          | Hent en liste over færger.                     | `antal`                 | integer  | Maksimalt antal færger, der returneres.                                           |
+|               | Læs          | Hent en færge.                                 | `id`                    | integer  | Unikt ID på færgen.                                                               |
+|               | Opdater      | Opdater en eksisterende færge.                 | `id`                    | integer  | Unikt ID på færgen.                                                               |
+|               |              |                                                | `navn`                  | string   | Færgens navn.                                                                     |
+| kapaciteter   | Opret        | Opret en kapacitetsbegrænsning for en færge.   | `færge_id`              | integer  | Unikt ID på færgen.                                                               |
+|               |              |                                                | `kategori`              | enum     | Kategorien: `Person`, `Kæledyr`, `Morgenmad`, `Førsteklasse` eller `Køretøj`.     |
+|               |              |                                                | `maksimum`              | integer  | Færgens maksimale kapacitet for kategorien.                                       |
+|               | Læs          | Hent kapacitetsbegrænsninger for en færge.     | `færge_id`              | integer  | Unikt ID på færgen.                                                               |
+|               | Opdater      | Opdater en eksisterende kapacitetsbegrænsning. | `id`                    | integer  | Unikt ID på kapacitetsbegrænsningen.                                              |
+|               |              |                                                | `kategori`              | enum     | Kategorien: `Person`, `Kæledyr`, `Morgenmad`, `Førsteklasse` eller `Køretøj`.     |
+|               |              |                                                | `maksimum`              | integer  | Færgens maksimale kapacitet for kategorien.                                       |
+| afgange       | Opret        | Opret en ny afgang.                            | `operatør_id`           | integer  | Unikt ID på operatøren.                                                           |
+|               |              |                                                | `færge_id`              | integer  | Unikt ID på færgen.                                                               |
+|               |              |                                                | `udrejse`               | enum     | Udrejse: `Frederikshavn` eller `Læsø`.                                            |
+|               |              |                                                | `tidspunkt`             | datetime | Tidspunktet for afgang i ISO 8601-format.                                         |
+|               |              |                                                | `aflyst`                | boolean  | Angiver, om afgangen er aflyst.                                                   |
+|               | Læs          | Hent en liste over afgange.                    | `antal`                 | integer  | Maksimalt antal afgange, der returneres.                                          |
+|               | Opdater      | Opdater en eksisterende afgang.                | `id`                    | integer  | Unikt ID på afgangen.                                                             |
+|               |              |                                                | `færge_id`              | integer  | Unikt ID på færgen.                                                               |
+|               |              |                                                | `udrejse`               | enum     | Udrejse: `Frederikshavn` eller `Læsø`.                                            |
+|               |              |                                                | `tidspunkt`             | datetime | Tidspunktet for afgang i ISO 8601-format.                                         |
+|               |              |                                                | `aflyst`                | boolean  | Angiver, om afgangen er aflyst.                                                   |
+| billetter     | Opret        | Opret en ny billet.                            | `afgang_id`             | integer  | Unikt ID på afgangen.                                                             |
+|               |              |                                                | `kunde_id`              | integer  | Unikt ID på kunden.                                                               |
+|               |              |                                                | `kategori`              | enum     | Billetkategori: `Person`, `Kæledyr`, `Morgenmad`, `Førsteklasse` eller `Køretøj`. |
+|               | Læs          | Hent billetter til en kunde.                   | `kunde_id`              | integer  | Unikt ID på kunden.                                                               |
+| personer      | Opret        | Opret en person til en billet.                 | `billet_id`             | integer  | Unikt ID på personens billet.                                                     |
+|               |              |                                                | `fødselsdato`           | date     | Personens fødselsdato i ISO 8601-format.                                          |
+|               | Opdater      | Opdater en eksisterende person.                | `id`                    | integer  | Unikt ID på personen.                                                             |
+|               |              |                                                | `fødselsdato`           | date     | Personens fødselsdato i ISO 8601-format.                                          |
+| køretøjer     | Opret        | Opret et køretøj til en billet.                | `billet_id`             | integer  | Unikt ID på køretøjets billet.                                                    |
+|               |              |                                                | `variant`               | enum     | Køretøjets variant: `Bil`, `Lastbil` eller `Cykel`.                               |
+|               |              |                                                | `identifikationsnummer` | string   | Køretøjets identifikationsnummer.                                                 |
+|               | Opdater      | Opdater et eksisterende køretøj.               | `id`                    | integer  | Unikt ID på køretøjet.                                                            |
+|               |              |                                                | `variant`               | enum     | Køretøjets variant: `Bil`, `Lastbil` eller `Cykel`.                               |
