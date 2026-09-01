@@ -141,11 +141,11 @@ billetter og overveje relevante tilkøb inden ankomst?
 
 ### Typografi
 
-**Skrifttype:** Alyamama
-**Grundstørrelse:** 16px
-**Skala:** Major Third (1.250)
-**Skriftvægt:** 400
-**Linjehøjde:** 1.6
+* Skrifttype: Alyamama
+* Grundstørrelse: 16px
+* Skala: Major Third (1.250)
+* Skriftvægt: 400
+* Linjehøjde: 1.6
 
 | Type    | Størrelse  |
 | ------- | ---------- |
