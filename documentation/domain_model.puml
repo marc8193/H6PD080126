@@ -1,3 +1,4 @@
+```puml
 @startuml
 skinparam linetype ortho
 skinparam dpi 400
@@ -15,9 +16,10 @@ rectangle Kæledyrsbillet
 rectangle Morgenmadsbillet
 rectangle Førsteklassebillet
 rectangle Køretøjsbillet
-rectangle Bil
-rectangle Lastbil
-rectangle Cykel
+rectangle Cykelbillet
+rectangle Bilbillet
+rectangle Lastbilbillet
+rectangle Person
 
 Operatør "1" -- "1..*" Afgang
 Operatør "1" -- "1..*" Færge
@@ -33,8 +35,11 @@ Morgenmadsbillet -up-|> Billet
 Førsteklassebillet -up-|> Billet
 Køretøjsbillet -up-|> Billet
 
-Cykel -up-|> Køretøjsbillet
-Bil -up-|> Køretøjsbillet
-Lastbil -up-|> Køretøjsbillet
+Personbillet "1" -- "1" Person
+
+Cykelbillet -up-|> Køretøjsbillet
+Bilbillet -up-|> Køretøjsbillet
+Lastbilbillet -up-|> Køretøjsbillet
 
 @enduml
+```
