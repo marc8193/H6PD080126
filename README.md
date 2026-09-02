@@ -105,6 +105,11 @@ billetter og overveje relevante tilkøb inden ankomst?
 |               | Læs          | Hent en færge.                                 | `id`                    | integer  | Unikt ID på færgen.                                                               |
 |               | Opdater      | Opdater en eksisterende færge.                 | `id`                    | integer  | Unikt ID på færgen.                                                               |
 |               |              |                                                | `navn`                  | string   | Færgens navn.                                                                     |
+| havne         | Opret        | Opret en ny havn.                              | `navn`                  | string   | Havnens navn.                                                                     |
+|               | Læs          | Hent en liste over havne.                      | `antal`                 | integer  | Maksimalt antal havne, der returneres.                                            |
+|               | Læs          | Hent en havn.                                  | `id`                    | integer  | Unikt ID på havnen.                                                               |
+|               | Opdater      | Opdater en eksisterende havn.                  | `id`                    | integer  | Unikt ID på havnen.                                                               |
+|               |              |                                                | `navn`                  | string   | Havnens navn.                                                                     |
 | kapaciteter   | Opret        | Opret en kapacitetsbegrænsning for en færge.   | `færge_id`              | integer  | Unikt ID på færgen.                                                               |
 |               |              |                                                | `kategori`              | enum     | Kategorien: `Person`, `Kæledyr`, `Morgenmad`, `Førsteklasse` eller `Køretøj`.     |
 |               |              |                                                | `maksimum`              | integer  | Færgens maksimale kapacitet for kategorien.                                       |
