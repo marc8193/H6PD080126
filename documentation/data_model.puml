@@ -17,12 +17,6 @@ class Bruger
   email: String
 }
 
-enum Udrejse
-{
-  Frederikshavn
-  Læsø
-}
-
 class Færge
 {
   id: Integer
@@ -46,12 +40,18 @@ class Kapacitet
   maksimum: Integer
 }
 
+class Havn
+{
+  id: Integer
+  navn: String
+}
+
 class Afgang
 {
   id: Integer
   operatør_id: FK
   færge_id: FK
-  udrejse: Udrejse
+  havn_id: FK
   tidspunkt: Datetime
   aflyst: Byte
 }
@@ -87,13 +87,13 @@ class Person
 }
 
 Bruger -- Rolle
-Afgang -- Udrejse
 Billet -- Kategori
 Kapacitet -- Kategori
 Køretøj -- Variant
 
 Bruger "1" -right- "0..*" Afgang: Operatør
 Færge "1" -- "0..*" Afgang
+Havn "1" -- "0..*" Afgang
 Færge "1" -- "1..*" Kapacitet
 
 Afgang "1" -- "0..*" Billet

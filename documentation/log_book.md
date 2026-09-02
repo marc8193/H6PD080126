@@ -6,4 +6,4 @@ Logbogen blev oprettet, og det første udkast til designdokumentet blev udarbejd
 
 ## Dag 2 – 01/09-2026
 
-Modellerne og specifikationen blev finpudset på baggrund af feedback.
+Specifikationen og modellerne blev finpudset på baggrund af feedback om manglende information.

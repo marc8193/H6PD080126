@@ -19,6 +19,9 @@ rectangle Køretøjsbillet
 rectangle Cykelbillet
 rectangle Bilbillet
 rectangle Lastbilbillet
+rectangle Cykel
+rectangle Bil
+rectangle Lastbil
 rectangle Person
 
 Operatør "1" -- "1..*" Afgang
@@ -38,8 +41,13 @@ Køretøjsbillet -up-|> Billet
 Personbillet "1" -- "1" Person
 
 Cykelbillet -up-|> Køretøjsbillet
+Cykelbillet "1" -- "1" Cykel
+
 Bilbillet -up-|> Køretøjsbillet
+Bilbillet "1" -- "1" Bil
+
 Lastbilbillet -up-|> Køretøjsbillet
+Lastbilbillet "1" -- "1" Lastbil
 
 @enduml
 ```
