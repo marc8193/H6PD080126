@@ -1,0 +1,38 @@
+@startuml
+skinparam linetype ortho
+skinparam dpi 400
+
+partition Kunde {
+  "Kunde" --> "Oplyser behov" as behov
+  --> "Får præsenteret muligheder" as muligheder
+  --> "Ændrer behov?" as ændrer
+  
+  ændrer -->[Ja] behov
+  ændrer -->[Nej] "Vælger mulighed"
+  --> "Betaler"
+  --> "Modtager kvittering"
+}
+
+--> (*)
+
+partition Operatør {
+  "Operatør" --> "Opretter afgang"
+  --> "Findes færge?" as findes_færge
+
+  findes_færge -->[Nej] "Opretter færge"
+  --> "Vælger færge" as vælger_færge
+
+  findes_færge -->[Ja] vælger_færge
+
+  vælger_færge --> "Vælger tidspunkt"
+  --> "Findes havn?" as findes_havn
+
+  findes_havn -->[Nej] "Opretter havn"
+  --> "Vælger havn" as vælger_havn
+
+  findes_havn -->[Ja] vælger_havn
+}
+
+--> (*)
+
+@enduml

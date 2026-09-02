@@ -70,12 +70,14 @@ billetter og overveje relevante tilkøb inden ankomst?
 * Kontrollere
 
 ### Domænemodel
-<img alt="Domain Model" src="public/domain_model.png" width="50%" />
+
+<img alt="Domænemodel" src="public/domain_model.png" width="50%" />
 
 ## Design
 
 ### Datamodel
-<img alt="Data Model" src="public/data_model.png" width="50%" />
+
+<img alt="Datamodel" src="public/data_model.png" width="50%" />
 
 ### Klient
 
@@ -142,9 +144,21 @@ billetter og overveje relevante tilkøb inden ankomst?
 |               | Opdater      | Opdater et eksisterende køretøj.               | `id`                    | integer  | Unikt ID på køretøjet.                                                            |
 |               |              |                                                | `variant`               | enum     | Køretøjets variant: `Bil`, `Lastbil` eller `Cykel`.                               |
 
-## Brugergrænseflade
+## Brugeroplevelse
 
-### Typografi
+### Brugerflow
+
+#### Reservation
+
+<img alt="Reservationsflow" src="public/user_flow.png" width="33%" />
+
+#### Validering
+
+<img alt="Valideringsflow" src="public/validation_flow.png" width="33%" />
+
+### Grænseflade
+
+#### Typografi
 
 * Skrifttype: Alyamama
 * Grundstørrelse: 16px
@@ -164,7 +178,7 @@ billetter og overveje relevante tilkøb inden ankomst?
 | small   | `0.8rem`   |
 | x-small | `0.64rem`  |
 
-### Lyst tema
+#### Lyst tema
 
 | Type     | Farve     | Beskrivelse                 |
 | -------- | --------- | --------------------------- |
@@ -174,7 +188,7 @@ billetter og overveje relevante tilkøb inden ankomst?
 | Sekundær | `#d9d9d9` | Lys neutral grå             |
 | Accent   | `#b0c4de` | Lys, afdæmpet stålblå       |
 
-### Mørkt tema
+#### Mørkt tema
 
 | Type     | Farve     | Beskrivelse                 |
 | -------- | --------- | --------------------------- |

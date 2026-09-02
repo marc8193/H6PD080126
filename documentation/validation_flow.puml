@@ -1,0 +1,21 @@
+@startuml
+skinparam linetype ortho
+skinparam dpi 400
+
+partition Kunde {
+  "Kunde" --> "Finder billetter"
+  --> "Får præsenteret billetter"
+  --> "Vælger billet"
+  --> "Får præsenteret billetten"
+}
+
+--> (*)
+
+partition Operatør {
+  "Operatør" --> "Scanner billetten"
+  --> "Får vist billettens gyldighed"
+}
+
+--> (*)
+
+@enduml
