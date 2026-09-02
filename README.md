@@ -150,7 +150,7 @@ billetter og overveje relevante tilkøb inden ankomst?
 
 #### Reservation
 
-<img alt="Reservationsflow" src="public/user_flow.png" width="33%" />
+<img alt="Reservationsflow" src="public/reservation_flow.png" width="33%" />
 
 #### Validering
 
