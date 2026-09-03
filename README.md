@@ -197,3 +197,13 @@ billetter og overveje relevante tilkøb inden ankomst?
 | Primær   | `#8bc0f9` | Lys, klar blå               |
 | Sekundær | `#262626` | Mørk neutral grå            |
 | Accent   | `#21354f` | Mørk, afdæmpet stålblå      |
+
+#### Skitse
+
+<img alt="Mockup 1" src="public/mockup_1.png" width="50%" />
+<img alt="Mockup 2" src="public/mockup_2.png" width="50%" />
+<img alt="Mockup 3" src="public/mockup_3.png" width="50%" />
+<img alt="Mockup 4" src="public/mockup_4.png" width="50%" />
+<img alt="Mockup 5" src="public/mockup_5.png" width="50%" />
+<img alt="Mockup 6" src="public/mockup_6.png" width="50%" />
+<img alt="Mockup 7" src="public/mockup_7.png" width="50%" />
