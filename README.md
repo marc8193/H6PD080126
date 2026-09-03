@@ -178,7 +178,7 @@ billetter og overveje relevante tilkøb inden ankomst?
 | small   | `0.8rem`   |
 | x-small | `0.64rem`  |
 
-#### Lyst tema
+#### Tema
 
 | Type     | Farve     | Beskrivelse                 |
 | -------- | --------- | --------------------------- |
@@ -187,16 +187,6 @@ billetter og overveje relevante tilkøb inden ankomst?
 | Primær   | `#063b74` | Dyb, mørk marineblå         |
 | Sekundær | `#d9d9d9` | Lys neutral grå             |
 | Accent   | `#b0c4de` | Lys, afdæmpet stålblå       |
-
-#### Mørkt tema
-
-| Type     | Farve     | Beskrivelse                 |
-| -------- | --------- | --------------------------- |
-| Tekst    | `#d6d6d6` | Lys neutral grå             |
-| Baggrund | `#080808` | Meget mørk grå, næsten sort |
-| Primær   | `#8bc0f9` | Lys, klar blå               |
-| Sekundær | `#262626` | Mørk neutral grå            |
-| Accent   | `#21354f` | Mørk, afdæmpet stålblå      |
 
 #### Skitse
 
