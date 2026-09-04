@@ -136,11 +136,13 @@ billetter og overveje relevante tilkøb inden ankomst?
 |               | Læs          | Hent billetter til en kunde.                   | `kunde_id`              | integer  | Unikt ID på kunden.                                                               |
 | personer      | Opret        | Opret en person til en billet.                 | `billet_id`             | integer  | Unikt ID på personens billet.                                                     |
 |               |              |                                                | `fødselsdato`           | date     | Personens fødselsdato i ISO 8601-format.                                          |
+|               | Læs          | Hent person til en billet.                     | `billet_id`             | integer  | Unikt ID på køretøjets billet.                                                    |
 |               | Opdater      | Opdater en eksisterende person.                | `id`                    | integer  | Unikt ID på personen.                                                             |
 |               |              |                                                | `fødselsdato`           | date     | Personens fødselsdato i ISO 8601-format.                                          |
 | køretøjer     | Opret        | Opret et køretøj til en billet.                | `billet_id`             | integer  | Unikt ID på køretøjets billet.                                                    |
 |               |              |                                                | `variant`               | enum     | Køretøjets variant: `Bil`, `Lastbil` eller `Cykel`.                               |
 |               |              |                                                | `identifikationsnummer` | string   | Køretøjets identifikationsnummer.                                                 |
+|               | Læs          | Hent køretøj til en billet.                    | `billet_id`             | integer  | Unikt ID på køretøjets billet.                                                    |
 |               | Opdater      | Opdater et eksisterende køretøj.               | `id`                    | integer  | Unikt ID på køretøjet.                                                            |
 |               |              |                                                | `variant`               | enum     | Køretøjets variant: `Bil`, `Lastbil` eller `Cykel`.                               |
 
