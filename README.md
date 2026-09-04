@@ -121,13 +121,13 @@ billetter og overveje relevante tilkøb inden ankomst?
 |               |              |                                                | `maksimum`              | integer  | Færgens maksimale kapacitet for kategorien.                                       |
 | afgange       | Opret        | Opret en ny afgang.                            | `operatør_id`           | integer  | Unikt ID på operatøren.                                                           |
 |               |              |                                                | `færge_id`              | integer  | Unikt ID på færgen.                                                               |
-|               |              |                                                | `udrejse`               | enum     | Udrejse: `Frederikshavn` eller `Læsø`.                                            |
+|               |              |                                                | `havne_id`              | integer  | Unikt ID på havnen.                                                               |
 |               |              |                                                | `tidspunkt`             | datetime | Tidspunktet for afgang i ISO 8601-format.                                         |
 |               |              |                                                | `aflyst`                | boolean  | Angiver, om afgangen er aflyst.                                                   |
 |               | Læs          | Hent en liste over afgange.                    | `antal`                 | integer  | Maksimalt antal afgange, der returneres.                                          |
 |               | Opdater      | Opdater en eksisterende afgang.                | `id`                    | integer  | Unikt ID på afgangen.                                                             |
 |               |              |                                                | `færge_id`              | integer  | Unikt ID på færgen.                                                               |
-|               |              |                                                | `udrejse`               | enum     | Udrejse: `Frederikshavn` eller `Læsø`.                                            |
+|               |              |                                                | `havne_id`              | integer  | Unikt ID på havnen.                                                               |
 |               |              |                                                | `tidspunkt`             | datetime | Tidspunktet for afgang i ISO 8601-format.                                         |
 |               |              |                                                | `aflyst`                | boolean  | Angiver, om afgangen er aflyst.                                                   |
 | billetter     | Opret        | Opret en ny billet.                            | `afgang_id`             | integer  | Unikt ID på afgangen.                                                             |
