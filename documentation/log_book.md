@@ -24,3 +24,8 @@ Udviklingen af serveren blev påbegyndt. Undervejs blev der identificeret en des
 API-specifikationen var blevet specificeret på et for lavt niveau. Ideelt set burde systemet have
 både et high-level og et low-level API, men på grund af den begrænsede tid fokuseres der
 udelukkende på high-level API-designet.
+
+## Dag 5 – 05/09-2026
+
+API'et blev finpudset, og de resterende slutpunkter blev implementeret. Herefter blev der
+testet manuelt for at kontrollere, at oprettelse, læsning og opdatering fungerer som forventet.

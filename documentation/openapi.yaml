@@ -1,0 +1,469 @@
+openapi: 3.0.3
+
+info:
+  title: Billethåndterings API
+  version: 1.0.0
+  description: API til håndtering af brugere, færger, kapaciteter, havne, afgange og billetter.
+
+servers:
+  - url: http://127.0.0.1:5000
+
+paths:
+  /api/v1/users:
+    get:
+      summary: Hent en bruger
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Unikt ID på brugeren.
+      responses:
+        "200":
+          description: Brugeren blev hentet.
+        "400":
+          description: Manglende eller ugyldigt ID.
+
+    post:
+      summary: Opret en ny bruger
+      parameters:
+        - name: role
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [operator, customer]
+          description: Brugerens rolle.
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Brugerens navn.
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+          description: Brugerens e-mailadresse.
+      responses:
+        "201":
+          description: Brugeren blev oprettet.
+        "400":
+          description: Ugyldige data.
+
+    patch:
+      summary: Opdater en eksisterende bruger
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Unikt ID på brugeren.
+        - name: role
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [operator, customer]
+          description: Brugerens rolle.
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Brugerens navn.
+      responses:
+        "200":
+          description: Brugeren blev opdateret.
+        "400":
+          description: Ugyldige data.
+
+  /api/v1/ferries:
+    get:
+      summary: Hent færger
+      parameters:
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Unikt ID på færgen.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: -1
+          description: Maksimalt antal færger, der returneres.
+      responses:
+        "200":
+          description: Færger blev hentet.
+        "400":
+          description: Ugyldige parametre.
+
+    post:
+      summary: Opret en ny færge
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Færgens navn.
+      responses:
+        "201":
+          description: Færgen blev oprettet.
+        "400":
+          description: Ugyldige data.
+
+    patch:
+      summary: Opdater en eksisterende færge
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Unikt ID på færgen.
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Færgens navn.
+      responses:
+        "200":
+          description: Færgen blev opdateret.
+        "400":
+          description: Ugyldige data.
+
+  /api/v1/ferries/capacities:
+    get:
+      summary: Hent kapacitetsbegrænsninger for en færge
+      parameters:
+        - name: ferry_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Unikt ID på færgen.
+      responses:
+        "200":
+          description: Kapacitetsbegrænsninger blev hentet.
+        "400":
+          description: Manglende eller ugyldigt ferry_id.
+
+    post:
+      summary: Opret en kapacitetsbegrænsning for en færge
+      parameters:
+        - name: ferry_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Unikt ID på færgen.
+        - name: category
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [person, pet, breakfast, first_class, vehicle]
+          description: Kategorien for kapacitetsbegrænsningen.
+        - name: maximum
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Færgens maksimale kapacitet for kategorien.
+      responses:
+        "201":
+          description: Kapacitetsbegrænsningen blev oprettet.
+        "400":
+          description: Ugyldige data.
+
+    patch:
+      summary: Opdater en eksisterende kapacitetsbegrænsning
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Unikt ID på kapacitetsbegrænsningen.
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [person, pet, breakfast, first_class, vehicle]
+          description: Kategorien for kapacitetsbegrænsningen.
+        - name: maximum
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Færgens maksimale kapacitet for kategorien.
+      responses:
+        "200":
+          description: Kapacitetsbegrænsningen blev opdateret.
+        "400":
+          description: Ugyldige data.
+
+  /api/v1/harbours:
+    get:
+      summary: Hent havne
+      parameters:
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Unikt ID på havnen.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: -1
+          description: Maksimalt antal havne, der returneres.
+      responses:
+        "200":
+          description: Havne blev hentet.
+        "400":
+          description: Ugyldige parametre.
+
+    post:
+      summary: Opret en ny havn
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Havnens navn.
+      responses:
+        "201":
+          description: Havnen blev oprettet.
+        "400":
+          description: Ugyldige data.
+
+    patch:
+      summary: Opdater en eksisterende havn
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Unikt ID på havnen.
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Havnens navn.
+      responses:
+        "200":
+          description: Havnen blev opdateret.
+        "400":
+          description: Ugyldige data.
+
+  /api/v1/departures:
+    get:
+      summary: Hent en liste over afgange
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: -1
+          description: Maksimalt antal afgange, der returneres.
+      responses:
+        "200":
+          description: Afgange blev hentet.
+        "400":
+          description: Ugyldig limit.
+
+    post:
+      summary: Opret en ny afgang
+      parameters:
+        - name: operator_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Unikt ID på operatøren.
+        - name: ferry_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Unikt ID på færgen.
+        - name: harbour_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Unikt ID på havnen.
+        - name: time
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Tidspunktet for afgang i ISO 8601-format.
+      responses:
+        "201":
+          description: Afgangen blev oprettet.
+        "400":
+          description: Ugyldige data.
+
+    patch:
+      summary: Opdater en eksisterende afgang
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Unikt ID på afgangen.
+        - name: ferry_id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Unikt ID på færgen.
+        - name: harbour_id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Unikt ID på havnen.
+        - name: time
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Tidspunktet for afgang i ISO 8601-format.
+        - name: canceled
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Angiver, om afgangen er aflyst.
+      responses:
+        "200":
+          description: Afgangen blev opdateret.
+        "400":
+          description: Ugyldige data.
+
+  /api/v1/tickets:
+    get:
+      summary: Hent billetter
+      parameters:
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Unikt ID på billetten.
+        - name: customer_id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Unikt ID på kunden.
+      responses:
+        "200":
+          description: Billetter blev hentet.
+        "400":
+          description: Ugyldige parametre.
+
+    post:
+      summary: Opret en ny billet
+      parameters:
+        - name: departure_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Unikt ID på afgangen.
+        - name: customer_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Unikt ID på kunden.
+        - name: category
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [person, pet, breakfast, first_class, vehicle]
+          description: Billetkategori.
+        - name: birthday
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Personens fødselsdato. Anvendes ved kategorien person.
+        - name: variant
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [car, truck, bicycle]
+          description: Køretøjets variant. Anvendes ved kategorien vehicle.
+        - name: identification
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Køretøjets identifikationsnummer. Anvendes ved kategorien vehicle.
+      responses:
+        "201":
+          description: Billetten blev oprettet.
+        "400":
+          description: Ugyldige data.
+
+    patch:
+      summary: Opdater en eksisterende billet
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Unikt ID på billetten.
+        - name: birthday
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Personens fødselsdato. Anvendes ved kategorien person.
+        - name: variant
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [car, truck, bicycle]
+          description: Køretøjets variant. Anvendes ved kategorien vehicle.
+        - name: identification
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Køretøjets identifikationsnummer. Anvendes ved kategorien vehicle.
+      responses:
+        "200":
+          description: Billetten blev opdateret.
+        "400":
+          description: Ugyldige data.

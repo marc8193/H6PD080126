@@ -138,10 +138,6 @@ billetter og overveje relevante tilkøb inden ankomst?
 |                    |              |                                                          | `identifikationsnummer` | string   | Køretøjets identifikationsnummer. Anvendes ved kategorien `Køretøj`.                   |
 |                    | Læs          | Hent billetter til en kunde.                             | `kunde_id`              | integer  | Unikt ID på kunden.                                                                    |
 |                    | Læs          | Hent en billet.                                          | `id`                    | integer  | Unikt ID på billetten.                                                                 |
-|                    | Opdater      | Opdater en eksisterende billet.                          | `id`                    | integer  | Unikt ID på billetten.                                                                 |
-|                    |              |                                                          | `fødselsdato`           | date     | Personens fødselsdato i ISO 8601-format. Anvendes ved kategorien `Person`.             |
-|                    |              |                                                          | `variant`               | enum     | Køretøjets variant: `Bil`, `Lastbil` eller `Cykel`. Anvendes ved kategorien `Køretøj`. |
-|                    |              |                                                          | `identifikationsnummer` | string   | Køretøjets identifikationsnummer. Anvendes ved kategorien `Køretøj`.                   |
 
 ## Brugeroplevelse
 
