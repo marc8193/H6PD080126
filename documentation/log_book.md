@@ -17,3 +17,10 @@ brugerflows.
 ## Dag 4 – 03/09-2026
 
 Der blev udarbejdet en skitse af brugergrænsefladen.
+
+## Dag 4 – 04/09-2026
+
+Udviklingen af serveren blev påbegyndt. Undervejs blev der identificeret en designfejl, hvor
+API-specifikationen var blevet specificeret på et for lavt niveau. Ideelt set burde systemet have
+både et high-level og et low-level API, men på grund af den begrænsede tid fokuseres der
+udelukkende på high-level API-designet.

@@ -7,6 +7,7 @@ rectangle Operatør
 
 rectangle Afgang
 rectangle Færge
+rectangle Havn
 
 rectangle Kunde
 
@@ -28,6 +29,7 @@ Operatør "1" -- "1..*" Afgang
 Operatør "1" -- "1..*" Færge
 
 Færge "1" -- "0..*" Afgang
+Havn "1" -- "0..*" Afgang
 Afgang "1" -- "1..*" Billet
 
 Kunde "1" -- "1..*" Billet

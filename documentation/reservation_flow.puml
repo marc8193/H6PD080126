@@ -4,11 +4,11 @@ skinparam dpi 400
 
 partition Kunde {
   "Kunde" --> "Oplyser behov" as behov
-  --> "Får præsenteret muligheder" as muligheder
+  --> "Får præsenteret afgange" as afgange
   --> "Ændrer behov?" as ændrer
   
   ændrer -->[Ja] behov
-  ændrer -->[Nej] "Vælger mulighed"
+  ændrer -->[Nej] "Vælger afgang"
   --> "Betaler"
   --> "Modtager kvittering"
 }
