@@ -8,7 +8,7 @@ do declare $argument="1";
 done
 
 if [[ "$#" == "0" ]]; then
-  main="1";
+  all="1";
 fi
 
 # --- Prep Directories ------------------------------------------------------------------------------
@@ -16,17 +16,17 @@ mkdir -p build
 
 # --- Build -----------------------------------------------------------------------------------------
 cd build
-if [[ "${main:-0}" == "1" ]]; then
-  did_build=1;
+if [[ "${all:-0}" == "1" || "${client:-0}" == "1" ]]; then
+  did_build=1 && elm make ../source/client/Main.elm --output=main.js;
 fi
-if [[ "${docs:-0}" == "1" ]]; then
-  did_build=1 && plantuml -tpng ../documentation/*.puml -o ../public;
+if [[ "${all:-0}" == "1" || "${docs:-0}" == "1" ]]; then
+  did_build=1 && plantuml -tpng ../documentation/*.puml -o ../asset;
 fi
 cd ..
 
 # --- Warn On No Builds -----------------------------------------------------------------------------
 if [[ "${did_build:-0}" == "0" ]]; then
-    echo "[WARNING] no valid build target specified; must use build target names as arguments \
-         to this script, like \`./build.sh release main\` or \`./build.sh docs\`."
+  echo "[WARNING] no valid build target specified; must use build target names as arguments \
+       to this script, like \`./build.sh all\`, \`./build.sh client\` or \`./build.sh docs\`."
   exit 1
 fi

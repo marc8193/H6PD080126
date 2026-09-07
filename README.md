@@ -75,6 +75,43 @@ billetter og overveje relevante tilkøb inden ankomst?
 
 ## Design
 
+### Elementer
+
+* Konfigurationsstyring
+  - Eleven skal benytte en konfigurations styringsløsning til versions- og
+    konfigurationsstyring under udarbejdelse af sit produkt.
+
+* Sikkerhed
+  - Eleven skal inddrage sikkerhed i sit arbejde med produktet.
+
+* Test
+  - Eleven skal inkorporere hvordan kvaliteten af produktet sikres,
+    herunder hvordan produktet kan testes.
+
+* Database
+  - Alle produkter skal indeholde mindst én database til lagring/behandling af data.
+    Typisk vil der være tale om relationelle databaser, men andre database typer kan,
+    afhængig af projektets karakter, også komme i spil.
+
+* Server
+  - Alle produkter skal indeholde en server. Og alle jeres Web baserede produkter både Clientside og
+    Serverside skal hostes på en måde, så de kan tilgås af lærere og censor,
+    uden a disse skal være koblet på skolens netværk.
+
+* Klient/Server
+- En web applikation og/eller en standalone applikation,
+  der tilgår data fra en server via et kendt API som f.eks REST.
+  Applikationen kan være distribueret eller cloudbaseret.
+
+CI/CD
+- Det er også muligt at involvere Continuous Integration og Continuous Deployment,
+  hvis man synes det er relevant for projektet. Her kan man med fordel lave automatiserede modul- og
+  integrationstest af ens system/systemer, når man laver en Push til f.eks. GitHub.
+  Dette kan man med fordel lave et eksempel på under sin fremlæggelse. Det vil sige,
+  man laver en push af sit projekt/sine projekter, går videre med et andet punkt i sin fremlæggelse.
+  Og mens man er i gang med dette andet punkt,
+  modtager man en mail fra (f.eks.) GitHub med resultatet af build og test run.
+
 ### Datamodel
 
 <img alt="Datamodel" src="public/data_model.png" width="50%" />

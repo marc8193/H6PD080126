@@ -1,0 +1,35 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Main</title>
+
+  <style>
+    @font-face {
+      font-family: "Alyamama";
+      src: url("/asset/font/Alyamama-VariableFont_wght.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 100 900;
+    }
+    
+    body {
+      margin: 0;
+      font-family: "Alyamama", sans-serif;
+    }
+  </style>
+
+  <script src="/build/main.js"></script>
+</head>
+
+<body>
+  <div id="myapp"></div>
+
+  <script>
+    var app = Elm.Main.init({
+      node: document.getElementById("myapp"),
+      flags: {
+        server_url: "http://localhost:5000/api/v1"
+      }
+    });
+  </script>
+</body>
+</html>

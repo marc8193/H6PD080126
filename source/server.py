@@ -2,14 +2,15 @@
 
 # Standard Library
 
-from enum import Enum
 from datetime import datetime, date
+from enum import Enum
 import sqlite3
 import threading
 
 # Third-party
 
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 # Storage
 
@@ -113,6 +114,8 @@ connection.commit()
 # Presentation
 
 app = Flask(__name__)
+
+CORS(app, origins=["http://localhost:8000"])
 
 ## User
 
