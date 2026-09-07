@@ -71,7 +71,7 @@ billetter og overveje relevante tilkøb inden ankomst?
 
 ### Domænemodel
 
-<img alt="Domænemodel" src="public/domain_model.png" width="50%" />
+<img alt="Domænemodel" src="asset/domain_model.png" width="50%" />
 
 ## Design
 
@@ -114,7 +114,7 @@ CI/CD
 
 ### Datamodel
 
-<img alt="Datamodel" src="public/data_model.png" width="50%" />
+<img alt="Datamodel" src="asset/data_model.png" width="50%" />
 
 ### Klient
 
@@ -182,11 +182,11 @@ CI/CD
 
 #### Reservation
 
-<img alt="Reservationsflow" src="public/reservation_flow.png" width="50%" />
+<img alt="Reservationsflow" src="asset/reservation_flow.png" width="50%" />
 
 #### Validering
 
-<img alt="Valideringsflow" src="public/validation_flow.png" width="50%" />
+<img alt="Valideringsflow" src="asset/validation_flow.png" width="50%" />
 
 ### Grænseflade
 
@@ -222,10 +222,10 @@ CI/CD
 
 #### Skitse
 
-<img alt="Mockup 1" src="public/mockup_1.png" width="50%" />
-<img alt="Mockup 2" src="public/mockup_2.png" width="50%" />
-<img alt="Mockup 3" src="public/mockup_3.png" width="50%" />
-<img alt="Mockup 4" src="public/mockup_4.png" width="50%" />
-<img alt="Mockup 5" src="public/mockup_5.png" width="50%" />
-<img alt="Mockup 6" src="public/mockup_6.png" width="50%" />
-<img alt="Mockup 7" src="public/mockup_7.png" width="50%" />
+<img alt="Mockup 1" src="asset/mockup_1.png" width="50%" />
+<img alt="Mockup 2" src="asset/mockup_2.png" width="50%" />
+<img alt="Mockup 3" src="asset/mockup_3.png" width="50%" />
+<img alt="Mockup 4" src="asset/mockup_4.png" width="50%" />
+<img alt="Mockup 5" src="asset/mockup_5.png" width="50%" />
+<img alt="Mockup 6" src="asset/mockup_6.png" width="50%" />
+<img alt="Mockup 7" src="asset/mockup_7.png" width="50%" />
