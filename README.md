@@ -103,7 +103,7 @@ billetter og overveje relevante tilkøb inden ankomst?
   der tilgår data fra en server via et kendt API som f.eks REST.
   Applikationen kan være distribueret eller cloudbaseret.
 
-CI/CD
+* CI/CD
 - Det er også muligt at involvere Continuous Integration og Continuous Deployment,
   hvis man synes det er relevant for projektet. Her kan man med fordel lave automatiserede modul- og
   integrationstest af ens system/systemer, når man laver en Push til f.eks. GitHub.
