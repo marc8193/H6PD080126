@@ -199,7 +199,7 @@ def patch_users():
 
   except Exception as error:
     connection.rollback()
-    
+
     result = jsonify(message=f"Failed to update user: {str(error)}"), 400
 
   return result
@@ -273,7 +273,7 @@ def patch_ferries():
 
   except Exception as error:
     connection.rollback()
-    
+
     result = jsonify(message=f"Failed to update ferry: {str(error)}"), 400
 
   return result
@@ -360,7 +360,7 @@ def patch_ferry_capacities():
 
   except Exception as error:
     connection.rollback()
-    
+
     result = jsonify(message=f"Failed to update capacity: {str(error)}"), 400
 
   return result
@@ -413,7 +413,7 @@ def get_harbours():
     result = (jsonify(query_result.fetchall()), 200)
 
   return result
-  
+
 @app.patch("/api/v1/harbours")
 def patch_harbours():
   id = request.args.get("id", type=int)
@@ -434,12 +434,12 @@ def patch_harbours():
 
   except Exception as error:
     connection.rollback()
-    
+
     result = jsonify(message=f"Failed to update harbour: {str(error)}"), 400
 
   return result
 
-# Depature
+# Departure
 
 @app.post("/api/v1/departures")
 def post_departure():
@@ -489,13 +489,41 @@ def post_departure():
 
 @app.get("/api/v1/departures")
 def get_departures():
+  harbour_id = request.args.get("harbour_id", type=int)
   limit = request.args.get("limit", type=int, default=-1)
+
+  if harbour_id is None:
+    return jsonify(message="Missing or invalid harbour_id"), 400
 
   connection = get_connection()
 
-  query = "SELECT * FROM departures LIMIT ?"
-  query_result = connection.execute(query, (limit,))
-  result = (jsonify(query_result.fetchall()), 200)
+  query = "SELECT * FROM departures WHERE harbour_id = ? LIMIT ?"
+  query_result = connection.execute(query, (harbour_id, limit))
+
+  departures = query_result.fetchall()
+  for departure in departures:
+    query = "SELECT * FROM users WHERE id = ?"
+    query_result = connection.execute(query, (departure.get("operator_id"),))
+    user = query_result.fetchone()
+
+    departure["operator"] = user
+    del departure["operator_id"]
+
+    query = "SELECT * FROM ferries WHERE id = ?"
+    query_result = connection.execute(query, (departure.get("ferry_id"),))
+    ferry = query_result.fetchone()
+
+    departure["ferry"] = ferry
+    del departure["ferry_id"]
+
+    query = "SELECT * FROM harbours WHERE id = ?"
+    query_result = connection.execute(query, (departure.get("harbour_id"),))
+    harbour = query_result.fetchone()
+
+    departure["harbour"] = harbour
+    del departure["harbour_id"]
+
+  result = (jsonify(departures), 200)
 
   return result
 
@@ -531,7 +559,7 @@ def patch_departures():
 
   except Exception as error:
     connection.rollback()
-    
+
     result = jsonify(message=f"Failed to update departure: {str(error)}"), 400
 
   return result

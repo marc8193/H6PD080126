@@ -276,6 +276,9 @@ paths:
     get:
       summary: Hent en liste over afgange
       parameters:
+        - name: harbour_id
+          in: query
+          required: true
         - name: limit
           in: query
           required: false

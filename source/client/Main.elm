@@ -23,33 +23,69 @@ main =
 
 -- MODEL
 
-type Step
-  = Trip_Type_Step
-  | Departure_From_Step
-  | Ticket_Step
-  | Departure_Step
-  | Confirm_Pay_Step
+type Step = Departure_From_Step | Ticket_Step | Departure_Step | Confirm_Pay_Step
 
 type alias Model =
   { server_url : String
   , step : Step
+  , harbour: Maybe Harbour
   , departures : List Departure
+  , harbours : List Harbour
+  }
+
+type alias Ferry =
+  { id : Int
+  , name : String
+  }
+
+type alias Harbour =
+  { id : Int
+  , name : String
+  }
+
+type alias Operator =
+  { id : Int
+  , name : String
+  , email : String
+  , role : String
   }
 
 type alias Departure =
   { id : Int
-  , ferryId : Int
-  , harbourId : Int
+  , ferry : Ferry
+  , harbour : Harbour
+  , operator : Operator
   , time : String
   , canceled : Int
   }
 
+ferryDecoder : Decode.Decoder Ferry
+ferryDecoder =
+  Decode.map2 Ferry
+    (Decode.field "id" Decode.int)
+    (Decode.field "name" Decode.string)
+
+harbourDecoder : Decode.Decoder Harbour
+harbourDecoder =
+  Decode.map2 Harbour
+    (Decode.field "id" Decode.int)
+    (Decode.field "name" Decode.string)
+
+operatorDecoder : Decode.Decoder Operator
+operatorDecoder =
+  Decode.map4 Operator
+    (Decode.field "id" Decode.int)
+    (Decode.field "name" Decode.string)
+    (Decode.field "email" Decode.string)
+    (Decode.field "role" Decode.string)
+
 departureDecoder : Decode.Decoder Departure
 departureDecoder =
-  Decode.map5 Departure
+  Decode.map6 Departure
     (Decode.field "id" Decode.int)
-    (Decode.field "ferry_id" Decode.int)
-    (Decode.field "harbour_id" Decode.int)
+    (Decode.field "ferry" ferryDecoder)
+    (Decode.field "harbour" harbourDecoder)
+    (Decode.field "operator" operatorDecoder)
     (Decode.field "time" Decode.string)
     (Decode.field "canceled" Decode.int)
 
@@ -60,10 +96,15 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init flags =
   ( { server_url = flags.server_url
-    , step = Trip_Type_Step
+    , step = Departure_From_Step
+    , harbour = Nothing
     , departures = []
+    , harbours = []
     }
-  , getDepartures flags.server_url
+  , Cmd.batch
+      [ getDepartures flags.server_url
+      , getHarbours flags.server_url
+      ]
   )
 
 -- API
@@ -75,9 +116,20 @@ getDepartures server_url =
   , expect = Http.expectJson GotDepartures (Decode.list departureDecoder)
   }
 
+getHarbours : String -> Cmd Msg
+getHarbours server_url =
+  Http.get
+  { url = server_url ++ "/harbours"
+  , expect = Http.expectJson GotHarbours (Decode.list harbourDecoder)
+  }
+
 -- UPDATE
 
-type Msg = GotDepartures (Result Http.Error (List Departure)) | StepClicked Step
+type Msg
+  = StepClicked Step
+  | Harbour_Selected Harbour
+  | GotDepartures (Result Http.Error (List Departure))
+  | GotHarbours (Result Http.Error (List Harbour))
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -85,15 +137,21 @@ update msg model =
     StepClicked step ->
       ( { model | step = step }, Cmd.none )
 
+    Harbour_Selected harbour ->
+      ( { model | harbour = Just harbour }, Cmd.none )
+
     GotDepartures result ->
       case result of
         Ok departures ->
           let _ = Debug.log "departures" departures
           in ( { model | departures = departures }, Cmd.none )
 
-        Err error ->
-          let _ = Debug.log "HTTP error" error
-          in ( model, Cmd.none )
+        Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
+
+    GotHarbours result ->
+      case result of
+        Ok harbours -> ({ model | harbours = harbours, harbour = List.head harbours }, Cmd.none)
+        Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
 
 subscriptions : Model -> Sub Msg
 subscriptions _ = Sub.none
@@ -113,7 +171,7 @@ view_header =
   [ h4
     [ style "color" Theme.primary
     , style "font-size" Theme.typeScale.h4
-    , style "transform" "translateY(0.25rem)"
+    , style "transform" "translateY(0.2rem)"
     , style "margin" "1rem"
     ]
     [ text "Læsøfærgen. "
@@ -147,14 +205,64 @@ view_separator =
   ]
   []
 
+type alias Radio_Button_Item = { id : Int, name : String }
+
+view_radio_button :
+  (Radio_Button_Item -> msg)
+  -> Maybe Radio_Button_Item
+  -> Radio_Button_Item
+  -> Html msg
+view_radio_button to_Msg current item =
+  div
+  [ style "display" "flex"
+  , style "align-items" "center"
+  , style "justify-content" "center"
+  , style "width" "100%"
+  , style "height" "3rem"
+  , style "background-color" (if current == Just item then Theme.primary else Theme.secondary)
+  , style "color" (if current == Just item then Theme.secondary else Theme.text)
+  , style "border-radius" "1rem"
+  , onClick (to_Msg item)
+  ]
+  [ span
+    [ style "transform" "translateY(0.2rem)" ]
+    [ text item.name ]
+  ]
+
+view_radio_option :
+  (Radio_Button_Item -> msg)
+  -> Maybe Radio_Button_Item
+  -> Radio_Button_Item
+  -> Radio_Button_Item
+  -> Html msg
+view_radio_option to_Msg selected first second =
+  div
+  [ style "display" "flex"
+  , style "flex-direction" "row"
+  , style "gap" "1rem"
+  ]
+  [ view_radio_button to_Msg selected first
+  , view_radio_button to_Msg selected second
+  ]
+
 view_step_panel : Model -> Html Msg
 view_step_panel model =
   case model.step of
-    Trip_Type_Step ->
-      div [] [ text "Vælg rejsetype" ]
-
     Departure_From_Step ->
-      div [] [ text "Vælg udrejse" ]
+      case
+        ( List.filter (\harbour -> harbour.name == "Frederikshavn") model.harbours |> List.head
+        , List.filter (\harbour -> harbour.name == "Læsø") model.harbours |> List.head
+        )
+      of
+        ( Just frederikshavn, Just laesoe ) ->
+          div []
+          [ view_radio_option
+              Harbour_Selected
+              model.harbour
+              frederikshavn
+              laesoe
+          ]
+        _ -> div [] [ text "Kunne ikke indlæse havne." ]
 
     Ticket_Step ->
       div [] [ text "Vælg billet" ]
@@ -169,8 +277,86 @@ view_departure : Departure -> Html Msg
 view_departure departure =
   div []
   [ p [] [ text ("Afgang: " ++ departure.time) ]
-  , p [] [ text ("Færge: " ++ String.fromInt departure.ferryId) ]
-  , p [] [ text ("Havn: " ++ String.fromInt departure.harbourId) ]
+  , p [] [ text ("Færge: " ++ departure.ferry.name) ]
+  , p [] [ text ("Havn: " ++ departure.harbour.name) ]
+  ]
+
+view_ticket_picker : Model -> Html Msg
+view_ticket_picker model =
+  div
+  [ style "display" "flex"
+  , style "flex-direction" "column"
+  , style "align-items" "center"
+  -- Center the step selector vertically, accounting for the 5rem header area.
+  , style "padding-top" "calc(50vh - 5rem)"
+  ]
+  [ div
+    [ style "display" "grid"
+    , style "grid-template-columns" "1fr 0.1rem 1fr 0.1rem 1fr 0.1rem 2fr"
+    , style "align-items" "center"
+    , style "text-align" "center"
+    , style "background-color" Theme.background
+    , style "width" "52rem"
+    , style "height" "5rem"
+    , style "border-radius" "1rem"
+    ]
+    [ view_step model.step Departure_From_Step "Udrejse"
+    , view_separator
+    , view_step model.step Ticket_Step "Billet"
+    , view_separator
+    , view_step model.step Departure_Step "Afgang"
+    , view_separator
+    , div
+      [ style "width" "100%"
+      , style "height" "80%"
+      , style "padding" "0 1rem"
+      , style "box-sizing" "border-box"
+      ]
+      [ div
+        [ style "display" "flex"
+        , style "align-items" "center"
+        , style "justify-content" "space-between"
+        , style "width" "100%"
+        , style "height" "100%"
+        , style "background-color" Theme.accent
+        , style "border-radius" "1rem"
+        , style "padding" "0.5rem"
+        , style "padding-left" "1rem"
+        , style "box-sizing" "border-box"
+        , onClick (StepClicked Confirm_Pay_Step)
+        ]
+        [ text "Bekræft og betal"
+        , div
+          [ style "display" "flex"
+          , style "align-items" "center"
+          , style "justify-content" "center"
+          , style "height" "100%"
+          , style "aspect-ratio" "1 / 1"
+          , style "background-color" Theme.primary
+          , style "border-radius" "1rem"
+          ]
+          [ svg
+            [ Svg.Attributes.width "1rem"
+            , Svg.Attributes.height "1rem"
+            , fill Theme.background
+            ]
+            [ path
+              [ d "M12.136.326A1.5 1.5 0 0 1 14 1.78V3h.5A1.5 1.5 0 0 1 16 4.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 13.5v-9a1.5 1.5 0 0 1 1.432-1.499zM5.562 3H13V1.78a.5.5 0 0 0-.621-.484zM1.5 4a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5z" ]
+              []
+            ]
+          ]
+        ]
+      ]
+    ]
+  , div
+    [ style "margin-top" "2rem"
+    , style "background-color" Theme.background
+    , style "width" "52rem"
+    , style "border-radius" "1rem"
+    , style "padding" "1rem"
+    , style "box-sizing" "border-box"
+    ]
+    [ view_step_panel model ]
   ]
 
 view : Model -> Html Msg
@@ -195,82 +381,6 @@ view model =
     , style "overflow-y" "auto"
     ]
     [ view_header
-    , div
-      [ style "display" "flex"
-      , style "flex-direction" "column"
-      , style "align-items" "center"
-      -- Center the step selector vertically, accounting for the 5rem header area.
-      , style "padding-top" "calc(50vh - 5rem)"
-      ]
-      [ div
-        [ style "display" "grid"
-        , style "grid-template-columns" "1fr 0.1rem 1fr 0.1rem 1fr 0.1rem 1fr 0.1rem 2fr"
-        , style "align-items" "center"
-        , style "text-align" "center"
-        , style "background-color" Theme.background
-        , style "width" "52rem"
-        , style "height" "5rem"
-        , style "border-radius" "1rem"
-        ]
-        [ view_step model.step Trip_Type_Step "Rejsetype"
-        , view_separator
-        , view_step model.step Departure_From_Step "Udrejse"
-        , view_separator
-        , view_step model.step Ticket_Step "Billet"
-        , view_separator
-        , view_step model.step Departure_Step "Afgang"
-        , view_separator
-        , div
-          [ style "width" "100%"
-          , style "height" "80%"
-          , style "padding" "0 1rem"
-          , style "box-sizing" "border-box"
-          ]
-          [ div
-            [ style "display" "flex"
-            , style "align-items" "center"
-            , style "justify-content" "space-between"
-            , style "width" "100%"
-            , style "height" "100%"
-            , style "background-color" Theme.accent
-            , style "border-radius" "1rem"
-            , style "padding" "0.5rem"
-            , style "padding-left" "1rem"
-            , style "box-sizing" "border-box"
-            , onClick (StepClicked Confirm_Pay_Step)
-            ]
-            [ text "Bekræft og betal"
-            , div
-              [ style "display" "flex"
-              , style "align-items" "center"
-              , style "justify-content" "center"
-              , style "height" "100%"
-              , style "aspect-ratio" "1 / 1"
-              , style "background-color" Theme.primary
-              , style "border-radius" "1rem"
-              ]
-              [ svg
-                [ Svg.Attributes.width "1rem"
-                , Svg.Attributes.height "1rem"
-                , fill Theme.background
-                ]
-                [ path
-                  [ d "M12.136.326A1.5 1.5 0 0 1 14 1.78V3h.5A1.5 1.5 0 0 1 16 4.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 13.5v-9a1.5 1.5 0 0 1 1.432-1.499zM5.562 3H13V1.78a.5.5 0 0 0-.621-.484zM1.5 4a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5z" ]
-                  []
-                ]
-              ]
-            ]
-          ]
-        ]
-      , div
-        [ style "margin-top" "2rem"
-        , style "background-color" Theme.background
-        , style "width" "52rem"
-        , style "border-radius" "1rem"
-        , style "padding" "1rem"
-        , style "box-sizing" "border-box"
-        ]
-        [ view_step_panel model ]
-      ]
+    , view_ticket_picker model
     ]
   ]
