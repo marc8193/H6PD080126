@@ -99,18 +99,18 @@ billetter og overveje relevante tilkøb inden ankomst?
     uden a disse skal være koblet på skolens netværk.
 
 * Klient/Server
-- En web applikation og/eller en standalone applikation,
-  der tilgår data fra en server via et kendt API som f.eks REST.
-  Applikationen kan være distribueret eller cloudbaseret.
+  - En web applikation og/eller en standalone applikation,
+    der tilgår data fra en server via et kendt API som f.eks REST.
+    Applikationen kan være distribueret eller cloudbaseret.
 
 * CI/CD
-- Det er også muligt at involvere Continuous Integration og Continuous Deployment,
-  hvis man synes det er relevant for projektet. Her kan man med fordel lave automatiserede modul- og
-  integrationstest af ens system/systemer, når man laver en Push til f.eks. GitHub.
-  Dette kan man med fordel lave et eksempel på under sin fremlæggelse. Det vil sige,
-  man laver en push af sit projekt/sine projekter, går videre med et andet punkt i sin fremlæggelse.
-  Og mens man er i gang med dette andet punkt,
-  modtager man en mail fra (f.eks.) GitHub med resultatet af build og test run.
+  - Det er også muligt at involvere Continuous Integration og Continuous Deployment,
+    hvis man synes det er relevant for projektet. Her kan man med fordel lave automatiserede modul- og
+    integrationstest af ens system/systemer, når man laver en Push til f.eks. GitHub.
+    Dette kan man med fordel lave et eksempel på under sin fremlæggelse. Det vil sige,
+    man laver en push af sit projekt/sine projekter, går videre med et andet punkt i sin fremlæggelse.
+    Og mens man er i gang med dette andet punkt,
+    modtager man en mail fra (f.eks.) GitHub med resultatet af build og test run.
 
 ### Datamodel
 
