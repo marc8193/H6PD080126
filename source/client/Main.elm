@@ -199,7 +199,8 @@ view model =
       [ style "display" "flex"
       , style "flex-direction" "column"
       , style "align-items" "center"
-      , style "padding-top" "50vh"
+      -- Center the step selector vertically, accounting for the 5rem header area.
+      , style "padding-top" "calc(50vh - 5rem)"
       ]
       [ div
         [ style "display" "grid"
