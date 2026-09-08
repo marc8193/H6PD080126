@@ -18,14 +18,26 @@ brugerflows.
 
 Der blev udarbejdet en skitse af brugergrænsefladen.
 
-## Dag 4 – 04/09-2026
+## Dag 5 – 04/09-2026
 
 Udviklingen af serveren blev påbegyndt. Undervejs blev der identificeret en designfejl, hvor
 API-specifikationen var blevet specificeret på et for lavt niveau. Ideelt set burde systemet have
 både et high-level og et low-level API, men på grund af den begrænsede tid fokuseres der
 udelukkende på high-level API-designet.
 
-## Dag 5 – 05/09-2026
+## Dag 6 – 05/09-2026
 
 API'et blev finpudset, og de resterende slutpunkter blev implementeret. Herefter blev der
 testet manuelt for at kontrollere, at oprettelse, læsning og opdatering fungerer som forventet.
+
+## Dag 7 – 07/09-2026
+
+Udviklingen af klienten blev påbegyndt, og projektstrukturen blev tilpasset ved at omdøbe
+public til asset. README-filen blev desuden udvidet, og henvisningerne til diagrammer blev
+opdateret.
+
+## Dag 8 – 08/09-2026
+
+Navigationen i rejsevælgeren blev implementeret, hvorefter dens placering og udseende blev
+finpudset. Udrejsepanelet blev udarbejdet med data fra API'et, som samtidig blev tilpasset og
+finpudset.

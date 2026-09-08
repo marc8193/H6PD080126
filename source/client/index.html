@@ -16,6 +16,13 @@
       font-family: "Alyamama", sans-serif;
     }
 
+    input,
+    button,
+    textarea,
+    select {
+      font: inherit;
+    }
+
     /* Firefox */
     * {
       scrollbar-width: thin;
@@ -39,6 +46,18 @@
 
     *::-webkit-scrollbar-thumb:hover {
       background: #d9d9d9;
+    }
+
+    input[type="date"]::-webkit-datetime-edit {
+      color: #888;
+    }
+
+    input[type="date"]:valid::-webkit-datetime-edit {
+      color: inherit;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      display: none;
     }
   </style>
 

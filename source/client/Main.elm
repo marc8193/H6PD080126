@@ -1,8 +1,8 @@
 module Main exposing (..)
 
 import Browser
-import Html exposing (Html, div, h4, p, span, text)
-import Html.Attributes exposing (style)
+import Html exposing (Html, div, h4, p, span, text, input)
+import Html.Attributes exposing (style, placeholder, type_, required)
 import Html.Events exposing (onClick)
 import Http
 import Json.Decode as Decode
@@ -96,7 +96,7 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init flags =
   ( { server_url = flags.server_url
-    , step = Departure_From_Step
+    , step = Ticket_Step
     , harbour = Nothing
     , departures = []
     , harbours = []
@@ -106,6 +106,11 @@ init flags =
       , getHarbours flags.server_url
       ]
   )
+
+type Ticket_Change
+  = Ticket_First_Name_Changed String
+  | Ticket_Last_Name_Changed String
+  | Ticket_Date_Of_Birth_Changed String
 
 -- API
 
@@ -128,6 +133,7 @@ getHarbours server_url =
 type Msg
   = StepClicked Step
   | Harbour_Selected Harbour
+  | Ticket_Changed Ticket_Change
   | GotDepartures (Result Http.Error (List Departure))
   | GotHarbours (Result Http.Error (List Harbour))
 
@@ -139,6 +145,12 @@ update msg model =
 
     Harbour_Selected harbour ->
       ( { model | harbour = Just harbour }, Cmd.none )
+
+    Ticket_Changed change ->
+      case change of
+        Ticket_First_Name_Changed first_name ->
+        Ticket_Last_Name_Changed last_name ->
+        Ticket_Date_Of_Birth_Changed date_of_birth ->
 
     GotDepartures result ->
       case result of
@@ -265,7 +277,127 @@ view_step_panel model =
         _ -> div [] [ text "Kunne ikke indlæse havne." ]
 
     Ticket_Step ->
-      div [] [ text "Vælg billet" ]
+      div []
+      [ div
+        [ style "display" "flex"
+        , style "flex-direction" "row"
+        , style "gap" "1rem"
+        , style "height" "7rem"
+        , style "width" "100%"
+        , style "padding" "1rem"
+        , style "box-sizing" "border-box"
+        , style "background-color" Theme.secondary
+        , style "border-radius" "1rem"
+        ]
+        [ div
+          [ style "display" "flex"
+          , style "align-items" "center"
+          , style "justify-content" "center"
+          , style "height" "100%"
+          , style "width" "9rem"
+          ] [ text "Person 1" ]
+        , div
+          [ style "margin-top" "-1.25rem"
+          , style "margin-bottom" "-1.25rem"
+          , style "display" "flex"
+          , style "flex-direction" "column"
+          , style "justify-content" "center"
+          , style "align-items" "center"
+          , style "gap" "0.25rem"
+          ]
+          [ div
+            [ style "width" "0.5rem"
+            , style "height" "0.5rem"
+            , style "min-width" "0.5rem"
+            , style "min-height" "0.5rem"
+            , style "flex-shrink" "0"
+            , style "border-radius" "50%"
+            , style "background-color" Theme.background
+            ] []
+          , div
+            [ style "height" "80%"
+            , style "border-left" ("0.1rem dashed " ++ Theme.background)
+            ] []
+          , div
+            [ style "width" "0.5rem"
+            , style "height" "0.5rem"
+            , style "min-width" "0.5rem"
+            , style "min-height" "0.5rem"
+            , style "flex-shrink" "0"
+            , style "border-radius" "50%"
+            , style "background-color" Theme.background
+            ] []
+          ]
+        , div
+          [ style "display" "grid"
+          , style "grid-template-columns" "1fr 1fr"
+          , style "grid-template-rows" "1fr 1fr"
+          , style "gap" "1rem"
+          , style "height" "100%"
+          , style "width" "100%"
+          ]
+          [ input
+            [ style "height" "2rem"
+            , style "width" "100%"
+            , style "background-color" Theme.background
+            , style "color" Theme.text
+            , style "border-radius" "1rem"
+            , style "border" "none"
+            , style "outline" "none"
+            , style "padding" "0.2rem 0rem 0rem 1rem"
+            , placeholder "Fornavn"
+            , required True
+            , onInput (Ticket_Changed << Ticket_First_Name_Changed)
+            ] []
+          , input
+            [ style "height" "2rem"
+            , style "width" "100%"
+            , style "background-color" Theme.background
+            , style "color" Theme.text
+            , style "border-radius" "1rem"
+            , style "border" "none"
+            , style "outline" "none"
+            , style "padding" "0.2rem 0rem 0rem 1rem"
+            , placeholder "Efternavn"
+            , required True
+            , onInput (Ticket_Changed << Ticket_Last_Name_Changed)
+            ] []
+          , div
+            [ style "display" "flex"
+            , style "flex-direction" "row"
+            , style "gap" "1rem"
+            , style "height" "2rem"
+            , style "width" "100%"
+            ]
+            [ input
+              [ style "height" "2rem"
+              , style "width" "100%"
+              , style "box-sizing" "border-box"
+              , style "background-color" Theme.background
+              , style "color" Theme.text
+              , style "border-radius" "1rem"
+              , style "border" "none"
+              , style "outline" "none"
+              , style "padding" "0.2rem 0rem 0rem 1rem"
+              , style "font-family" "inherit"
+              , type_ "date"
+              , required True
+              , onInput (Ticket_Changed << Ticket_Date_Of_Birth_Changed)
+              ]
+              []
+            ]
+          , div
+            [ style "display" "flex"
+            , style "justify-content" "flex-end"
+            , style "align-items" "flex-end"
+            , style "width" "100%"
+            , style "height" "100%"
+            ]
+            [ span [ style "transform" "translateY(0.5rem)" ] [ text "-- DKK" ]
+            ]
+          ]
+        ]
+      ]
 
     Departure_Step ->
       div [] (List.map view_departure model.departures)
