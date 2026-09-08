@@ -250,8 +250,7 @@ view model =
               , style "border-radius" "1rem"
               ]
               [ svg
-                [ viewBox "0 0 16 16"
-                , Svg.Attributes.width "1rem"
+                [ Svg.Attributes.width "1rem"
                 , Svg.Attributes.height "1rem"
                 , fill Theme.background
                 ]
