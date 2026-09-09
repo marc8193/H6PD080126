@@ -49,7 +49,7 @@ class Havn
 class Afgang
 {
   id: Integer
-  operatør_id: FK
+  bruger_id: FK
   færge_id: FK
   havn_id: FK
   tidspunkt: Datetime
@@ -60,7 +60,7 @@ class Billet
 {
   id: Integer
   afgang_id: FK
-  kunde_id: FK
+  bruger_id: FK
   kategori: Kategori
 }
 
@@ -83,6 +83,7 @@ class Person
 {
   id: Integer
   billet_id: FK
+  navn: String
   fødselsdato: Date
 }
 

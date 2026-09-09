@@ -295,7 +295,7 @@ paths:
     post:
       summary: Opret en ny afgang
       parameters:
-        - name: operator_id
+        - name: user_id
           in: query
           required: true
           schema:
@@ -376,7 +376,7 @@ paths:
           schema:
             type: integer
           description: Unikt ID på billetten.
-        - name: customer_id
+        - name: user_id
           in: query
           required: false
           schema:
@@ -397,7 +397,7 @@ paths:
           schema:
             type: integer
           description: Unikt ID på afgangen.
-        - name: customer_id
+        - name: user_id
           in: query
           required: true
           schema:
@@ -410,6 +410,13 @@ paths:
             type: string
             enum: [person, pet, breakfast, first_class, vehicle]
           description: Billetkategori.
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+            format: string
+          description: Personens navn. Anvendes ved kategorien person.
         - name: birthday
           in: query
           required: false

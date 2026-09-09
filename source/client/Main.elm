@@ -2,14 +2,13 @@ module Main exposing (..)
 
 import Browser
 import Html exposing (Html, div, h4, p, span, text, input)
-import Html.Attributes exposing (style, placeholder, type_, required)
-import Html.Events exposing (onClick)
+import Html.Attributes exposing (class, classList, placeholder, required, type_)
+import Html.Events exposing (onBlur, onClick, onInput)
 import Http
 import Json.Decode as Decode
 import Svg exposing (path, svg)
 import Svg.Attributes exposing (d, fill, viewBox)
 
-import Theme
 
 -- MAIN
 
@@ -23,14 +22,20 @@ main =
 
 -- MODEL
 
+temporary_developer_customer_id : Int
+temporary_developer_customer_id = 1
+
 type Step = Departure_From_Step | Ticket_Step | Departure_Step | Confirm_Pay_Step
 
 type alias Model =
   { server_url : String
   , step : Step
-  , harbour: Maybe Harbour
   , departures : List Departure
   , harbours : List Harbour
+  , harbour : Maybe Harbour
+  , ticket_requests : List Ticket_Request
+  , ticket_responses : List Ticket_Response
+  , is_create_ticket_expanded : Bool
   }
 
 type alias Ferry =
@@ -43,7 +48,7 @@ type alias Harbour =
   , name : String
   }
 
-type alias Operator =
+type alias User =
   { id : Int
   , name : String
   , email : String
@@ -54,40 +59,76 @@ type alias Departure =
   { id : Int
   , ferry : Ferry
   , harbour : Harbour
-  , operator : Operator
+  , user : User
   , time : String
   , canceled : Int
   }
 
-ferryDecoder : Decode.Decoder Ferry
-ferryDecoder =
+type alias Ticket_Request =
+  { id : Int
+  , departure : Departure
+  , user : User
+  , category : String
+  , name : Maybe String
+  , birthday : Maybe String
+  , variant : Maybe String
+  , identification : Maybe String
+  }
+
+type alias Person_Data = { name : String, birthday : String }
+
+type Variant = Car | Truck | Bicycle
+type alias Vehicle_Data = { variant : Variant, identification : String }
+
+type Category = Person Person_Data | Pet | Breakfast | Firstclass | Vehicle Vehicle_Data
+
+type alias Ticket_Response =
+  { departure_id : Int
+  , user_id : Int
+  , category : Category
+  }
+
+ferriesDecoder : Decode.Decoder Ferry
+ferriesDecoder =
   Decode.map2 Ferry
     (Decode.field "id" Decode.int)
     (Decode.field "name" Decode.string)
 
-harbourDecoder : Decode.Decoder Harbour
-harbourDecoder =
+harboursDecoder : Decode.Decoder Harbour
+harboursDecoder =
   Decode.map2 Harbour
     (Decode.field "id" Decode.int)
     (Decode.field "name" Decode.string)
 
-operatorDecoder : Decode.Decoder Operator
-operatorDecoder =
-  Decode.map4 Operator
+usersDecoder : Decode.Decoder User
+usersDecoder =
+  Decode.map4 User
     (Decode.field "id" Decode.int)
     (Decode.field "name" Decode.string)
     (Decode.field "email" Decode.string)
     (Decode.field "role" Decode.string)
 
-departureDecoder : Decode.Decoder Departure
-departureDecoder =
+departuresDecoder : Decode.Decoder Departure
+departuresDecoder =
   Decode.map6 Departure
     (Decode.field "id" Decode.int)
-    (Decode.field "ferry" ferryDecoder)
-    (Decode.field "harbour" harbourDecoder)
-    (Decode.field "operator" operatorDecoder)
+    (Decode.field "ferry" ferriesDecoder)
+    (Decode.field "harbour" harboursDecoder)
+    (Decode.field "user" usersDecoder)
     (Decode.field "time" Decode.string)
     (Decode.field "canceled" Decode.int)
+
+ticketsDecoder : Decode.Decoder Ticket_Request
+ticketsDecoder =
+  Decode.map8 Ticket_Request
+    (Decode.field "id" Decode.int)
+    (Decode.field "departure" departuresDecoder)
+    (Decode.field "user" usersDecoder)
+    (Decode.field "category" Decode.string)
+    (Decode.field "name" (Decode.nullable Decode.string))
+    (Decode.field "birthday" (Decode.nullable Decode.string))
+    (Decode.field "variant" (Decode.nullable Decode.string))
+    (Decode.field "identification" (Decode.nullable Decode.string))
 
 type alias Flags =
   { server_url : String
@@ -98,34 +139,40 @@ init flags =
   ( { server_url = flags.server_url
     , step = Ticket_Step
     , harbour = Nothing
+    , ticket_requests = []
+    , ticket_responses = []
     , departures = []
     , harbours = []
+    , is_create_ticket_expanded = False
     }
   , Cmd.batch
-      [ getDepartures flags.server_url
-      , getHarbours flags.server_url
+      [ getHarbours flags.server_url
       ]
   )
 
-type Ticket_Change
-  = Ticket_First_Name_Changed String
-  | Ticket_Last_Name_Changed String
-  | Ticket_Date_Of_Birth_Changed String
+type Ticket_Field = Ticket_First_Name | Ticket_Last_Name | Ticket_Date_Of_Birth
 
 -- API
 
-getDepartures : String -> Cmd Msg
-getDepartures server_url =
+getDepartures : String -> Int -> Cmd Msg
+getDepartures server_url harbour_id =
   Http.get
-  { url = server_url ++ "/departures"
-  , expect = Http.expectJson GotDepartures (Decode.list departureDecoder)
+  { url = server_url ++ "/departures?harbour_id=" ++ String.fromInt harbour_id
+  , expect = Http.expectJson GotDepartures (Decode.list departuresDecoder)
   }
 
 getHarbours : String -> Cmd Msg
 getHarbours server_url =
   Http.get
   { url = server_url ++ "/harbours"
-  , expect = Http.expectJson GotHarbours (Decode.list harbourDecoder)
+  , expect = Http.expectJson GotHarbours (Decode.list harboursDecoder)
+  }
+
+getTickets : String -> Int -> Cmd Msg
+getTickets server_url user_id =
+  Http.get
+  { url = server_url ++ "/tickets?user_id=" ++ String.fromInt user_id
+  , expect = Http.expectJson GotTicketRequests (Decode.list ticketsDecoder)
   }
 
 -- UPDATE
@@ -133,24 +180,39 @@ getHarbours server_url =
 type Msg
   = StepClicked Step
   | Harbour_Selected Harbour
-  | Ticket_Changed Ticket_Change
+  | Create_Ticket_Clicked
+  | Ticket_Validate Ticket_Field
+  | Ticket_Changed Ticket_Field String
   | GotDepartures (Result Http.Error (List Departure))
   | GotHarbours (Result Http.Error (List Harbour))
+  | GotTicketRequests (Result Http.Error (List Ticket_Request))
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
   case msg of
     StepClicked step ->
-      ( { model | step = step }, Cmd.none )
+      case ( step, model.harbour ) of
+          ( Departure_Step, Just harbour ) ->
+            ( { model | step = step }, getDepartures model.server_url harbour.id )
 
-    Harbour_Selected harbour ->
-      ( { model | harbour = Just harbour }, Cmd.none )
+          _ -> ( { model | step = step }, Cmd.none )
 
-    Ticket_Changed change ->
-      case change of
-        Ticket_First_Name_Changed first_name ->
-        Ticket_Last_Name_Changed last_name ->
-        Ticket_Date_Of_Birth_Changed date_of_birth ->
+    Harbour_Selected harbour -> ( { model | harbour = Just harbour }, Cmd.none )
+    Ticket_Validate field ->
+        case field of
+          Ticket_First_Name -> let _ = Debug.log "Validate first name" () in ( model, Cmd.none )
+          Ticket_Last_Name -> let _ = Debug.log "Validate last name" () in ( model, Cmd.none )
+          Ticket_Date_Of_Birth -> let _ = Debug.log "Validate date of birth" ()
+                                  in ( model, Cmd.none )
+
+    Create_Ticket_Clicked -> ( { model | is_create_ticket_expanded = True }, Cmd.none )
+
+    Ticket_Changed field value ->
+      case field of
+          Ticket_First_Name -> let _ = Debug.log "First name input" value in ( model, Cmd.none )
+          Ticket_Last_Name -> let _ = Debug.log "Last name input" value in ( model, Cmd.none )
+          Ticket_Date_Of_Birth -> let _ = Debug.log "Date of birth input" value
+                                  in ( model, Cmd.none )
 
     GotDepartures result ->
       case result of
@@ -162,7 +224,22 @@ update msg model =
 
     GotHarbours result ->
       case result of
-        Ok harbours -> ({ model | harbours = harbours, harbour = List.head harbours }, Cmd.none)
+        Ok harbours ->
+            case List.head harbours of
+                Just harbour ->
+                    ( { model | harbours = harbours, harbour = Just harbour }, Cmd.none )
+
+                Nothing -> ( model, Cmd.none )
+
+        Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
+
+    GotTicketRequests result ->
+      case result of
+        Ok tickets ->
+          let _ = Debug.log "tickets" tickets
+          in ( { model | ticket_requests = tickets }
+             , getTickets model.server_url temporary_developer_customer_id)
+
         Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
 
 subscriptions : Model -> Sub Msg
@@ -172,50 +249,24 @@ subscriptions _ = Sub.none
 
 view_header : Html Msg
 view_header =
-  div
-  [ style "display" "flex"
-  , style "align-items" "center"
-  , style "width" "100%"
-  , style "height" "3rem"
-  , style "background-color" Theme.background
-  , style "border-radius" "1rem"
-  ]
-  [ h4
-    [ style "color" Theme.primary
-    , style "font-size" Theme.typeScale.h4
-    , style "transform" "translateY(0.2rem)"
-    , style "margin" "1rem"
-    ]
-    [ text "Læsøfærgen. "
-    , span
-      [ style "font-size" Theme.typeScale.h6
-      , style "color" Theme.accent
+  div [ class "header" ]
+    [ h4 [ class "header-title" ]
+      [ text "Læsøfærgen. "
+      , span [ class "header-subtitle" ] [ text "Nemt til og fra Læsø" ]
       ]
-      [ text "Nemt til og fra Læsø" ]
     ]
-  ]
 
 view_step : Step -> Step -> String -> Html Msg
 view_step current_step step label =
   div
-  [ style "display" "flex"
-  , style "align-items" "center"
-  , style "justify-content" "center"
-  , style "width" "100%"
-  , style "height" "100%"
-  , style "text-decoration" (if current_step == step then "underline" else "none")
-  , onClick (StepClicked step)
-  ]
-  [ text label ]
+    [ classList [ ( "step", True ), ( "selected", current_step == step ) ]
+    , onClick (StepClicked step)
+    ]
+    [ text label ]
 
 view_separator : Html Msg
 view_separator =
-  div
-  [ style "width" "0.1rem"
-  , style "height" "80%"
-  , style "background-color" Theme.secondary
-  ]
-  []
+  div [ class "step-separator" ] []
 
 type alias Radio_Button_Item = { id : Int, name : String }
 
@@ -226,178 +277,76 @@ view_radio_button :
   -> Html msg
 view_radio_button to_Msg current item =
   div
-  [ style "display" "flex"
-  , style "align-items" "center"
-  , style "justify-content" "center"
-  , style "width" "100%"
-  , style "height" "3rem"
-  , style "background-color" (if current == Just item then Theme.primary else Theme.secondary)
-  , style "color" (if current == Just item then Theme.secondary else Theme.text)
-  , style "border-radius" "1rem"
-  , onClick (to_Msg item)
-  ]
-  [ span
-    [ style "transform" "translateY(0.2rem)" ]
-    [ text item.name ]
-  ]
+    [ classList [ ( "radio-button", True ), ( "selected", current == Just item ) ]
+    , onClick (to_Msg item)
+    ]
+    [ span [ class "radio-button-label" ] [ text item.name ] ]
 
-view_radio_option :
-  (Radio_Button_Item -> msg)
-  -> Maybe Radio_Button_Item
-  -> Radio_Button_Item
-  -> Radio_Button_Item
-  -> Html msg
-view_radio_option to_Msg selected first second =
-  div
-  [ style "display" "flex"
-  , style "flex-direction" "row"
-  , style "gap" "1rem"
-  ]
-  [ view_radio_button to_Msg selected first
-  , view_radio_button to_Msg selected second
-  ]
+view_ticket : Int -> Ticket_Response -> Html Msg
+view_ticket index ticket =
+  div [ class "ticket" ]
+    [ div [ class "ticket-label" ] [ text "Person 1" ]
+    , div [ class "ticket-divider" ]
+      [ div [ class "ticket-divider-dot" ] []
+      , div [ class "ticket-divider-line" ] []
+      , div [ class "ticket-divider-dot" ] []
+      ]
+    , div [ class "ticket-fields" ]
+      [ input
+        [ class "ticket-input"
+        , placeholder "Fornavn"
+        , required True
+        , onBlur (Ticket_Validate Ticket_First_Name)
+        , onInput (Ticket_Changed Ticket_First_Name)
+        ] []
+      , input
+        [ class "ticket-input"
+        , placeholder "Efternavn"
+        , required True
+        , onBlur (Ticket_Validate Ticket_Last_Name)
+        , onInput (Ticket_Changed Ticket_Last_Name)
+        ] []
+      , div [ class "ticket-date-row" ]
+        [ input
+          [ class "ticket-input"
+          , type_ "date"
+          , required True
+          , onBlur (Ticket_Validate Ticket_Date_Of_Birth)
+          , onInput (Ticket_Changed Ticket_Date_Of_Birth)
+          ] []
+        ]
+      , div [ class "ticket-price" ]
+        [ span [ class "ticket-price-text" ] [ text "-- DKK" ] ]
+      ]
+    ]
 
 view_step_panel : Model -> Html Msg
 view_step_panel model =
   case model.step of
     Departure_From_Step ->
-      case
-        ( List.filter (\harbour -> harbour.name == "Frederikshavn") model.harbours |> List.head
-        , List.filter (\harbour -> harbour.name == "Læsø") model.harbours |> List.head
+      div [ class "harbour-list" ]
+        (List.map
+          (\harbour -> view_radio_button Harbour_Selected model.harbour harbour) model.harbours
         )
-      of
-        ( Just frederikshavn, Just laesoe ) ->
-          div []
-          [ view_radio_option
-              Harbour_Selected
-              model.harbour
-              frederikshavn
-              laesoe
-          ]
-        _ -> div [] [ text "Kunne ikke indlæse havne." ]
 
     Ticket_Step ->
-      div []
-      [ div
-        [ style "display" "flex"
-        , style "flex-direction" "row"
-        , style "gap" "1rem"
-        , style "height" "7rem"
-        , style "width" "100%"
-        , style "padding" "1rem"
-        , style "box-sizing" "border-box"
-        , style "background-color" Theme.secondary
-        , style "border-radius" "1rem"
-        ]
-        [ div
-          [ style "display" "flex"
-          , style "align-items" "center"
-          , style "justify-content" "center"
-          , style "height" "100%"
-          , style "width" "9rem"
-          ] [ text "Person 1" ]
-        , div
-          [ style "margin-top" "-1.25rem"
-          , style "margin-bottom" "-1.25rem"
-          , style "display" "flex"
-          , style "flex-direction" "column"
-          , style "justify-content" "center"
-          , style "align-items" "center"
-          , style "gap" "0.25rem"
-          ]
+      div [ class "ticket-list" ]
+        (List.indexedMap view_ticket model.ticket_responses ++
           [ div
-            [ style "width" "0.5rem"
-            , style "height" "0.5rem"
-            , style "min-width" "0.5rem"
-            , style "min-height" "0.5rem"
-            , style "flex-shrink" "0"
-            , style "border-radius" "50%"
-            , style "background-color" Theme.background
-            ] []
+              [ class "create-ticket"
+              , onClick Create_Ticket_Clicked
+              ]
+              [ text "Opret ny billet" ]
+
           , div
-            [ style "height" "80%"
-            , style "border-left" ("0.1rem dashed " ++ Theme.background)
-            ] []
-          , div
-            [ style "width" "0.5rem"
-            , style "height" "0.5rem"
-            , style "min-width" "0.5rem"
-            , style "min-height" "0.5rem"
-            , style "flex-shrink" "0"
-            , style "border-radius" "50%"
-            , style "background-color" Theme.background
-            ] []
-          ]
-        , div
-          [ style "display" "grid"
-          , style "grid-template-columns" "1fr 1fr"
-          , style "grid-template-rows" "1fr 1fr"
-          , style "gap" "1rem"
-          , style "height" "100%"
-          , style "width" "100%"
-          ]
-          [ input
-            [ style "height" "2rem"
-            , style "width" "100%"
-            , style "background-color" Theme.background
-            , style "color" Theme.text
-            , style "border-radius" "1rem"
-            , style "border" "none"
-            , style "outline" "none"
-            , style "padding" "0.2rem 0rem 0rem 1rem"
-            , placeholder "Fornavn"
-            , required True
-            , onInput (Ticket_Changed << Ticket_First_Name_Changed)
-            ] []
-          , input
-            [ style "height" "2rem"
-            , style "width" "100%"
-            , style "background-color" Theme.background
-            , style "color" Theme.text
-            , style "border-radius" "1rem"
-            , style "border" "none"
-            , style "outline" "none"
-            , style "padding" "0.2rem 0rem 0rem 1rem"
-            , placeholder "Efternavn"
-            , required True
-            , onInput (Ticket_Changed << Ticket_Last_Name_Changed)
-            ] []
-          , div
-            [ style "display" "flex"
-            , style "flex-direction" "row"
-            , style "gap" "1rem"
-            , style "height" "2rem"
-            , style "width" "100%"
-            ]
-            [ input
-              [ style "height" "2rem"
-              , style "width" "100%"
-              , style "box-sizing" "border-box"
-              , style "background-color" Theme.background
-              , style "color" Theme.text
-              , style "border-radius" "1rem"
-              , style "border" "none"
-              , style "outline" "none"
-              , style "padding" "0.2rem 0rem 0rem 1rem"
-              , style "font-family" "inherit"
-              , type_ "date"
-              , required True
-              , onInput (Ticket_Changed << Ticket_Date_Of_Birth_Changed)
+              [ classList
+                  [ ( "create-ticket-dropdown", True )
+                  , ( "selected", model.is_create_ticket_expanded )
+                  ]
               ]
               []
-            ]
-          , div
-            [ style "display" "flex"
-            , style "justify-content" "flex-end"
-            , style "align-items" "flex-end"
-            , style "width" "100%"
-            , style "height" "100%"
-            ]
-            [ span [ style "transform" "translateY(0.5rem)" ] [ text "-- DKK" ]
-            ]
           ]
-        ]
-      ]
+        )
 
     Departure_Step ->
       div [] (List.map view_departure model.departures)
@@ -408,111 +357,45 @@ view_step_panel model =
 view_departure : Departure -> Html Msg
 view_departure departure =
   div []
-  [ p [] [ text ("Afgang: " ++ departure.time) ]
-  , p [] [ text ("Færge: " ++ departure.ferry.name) ]
-  , p [] [ text ("Havn: " ++ departure.harbour.name) ]
-  ]
+    [ p [] [ text ("Afgang: " ++ departure.time) ]
+    , p [] [ text ("Færge: " ++ departure.ferry.name) ]
+    , p [] [ text ("Havn: " ++ departure.harbour.name) ]
+    ]
 
 view_ticket_picker : Model -> Html Msg
 view_ticket_picker model =
-  div
-  [ style "display" "flex"
-  , style "flex-direction" "column"
-  , style "align-items" "center"
-  -- Center the step selector vertically, accounting for the 5rem header area.
-  , style "padding-top" "calc(50vh - 5rem)"
-  ]
-  [ div
-    [ style "display" "grid"
-    , style "grid-template-columns" "1fr 0.1rem 1fr 0.1rem 1fr 0.1rem 2fr"
-    , style "align-items" "center"
-    , style "text-align" "center"
-    , style "background-color" Theme.background
-    , style "width" "52rem"
-    , style "height" "5rem"
-    , style "border-radius" "1rem"
-    ]
-    [ view_step model.step Departure_From_Step "Udrejse"
-    , view_separator
-    , view_step model.step Ticket_Step "Billet"
-    , view_separator
-    , view_step model.step Departure_Step "Afgang"
-    , view_separator
-    , div
-      [ style "width" "100%"
-      , style "height" "80%"
-      , style "padding" "0 1rem"
-      , style "box-sizing" "border-box"
-      ]
-      [ div
-        [ style "display" "flex"
-        , style "align-items" "center"
-        , style "justify-content" "space-between"
-        , style "width" "100%"
-        , style "height" "100%"
-        , style "background-color" Theme.accent
-        , style "border-radius" "1rem"
-        , style "padding" "0.5rem"
-        , style "padding-left" "1rem"
-        , style "box-sizing" "border-box"
-        , onClick (StepClicked Confirm_Pay_Step)
-        ]
-        [ text "Bekræft og betal"
-        , div
-          [ style "display" "flex"
-          , style "align-items" "center"
-          , style "justify-content" "center"
-          , style "height" "100%"
-          , style "aspect-ratio" "1 / 1"
-          , style "background-color" Theme.primary
-          , style "border-radius" "1rem"
-          ]
-          [ svg
-            [ Svg.Attributes.width "1rem"
-            , Svg.Attributes.height "1rem"
-            , fill Theme.background
-            ]
-            [ path
-              [ d "M12.136.326A1.5 1.5 0 0 1 14 1.78V3h.5A1.5 1.5 0 0 1 16 4.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 13.5v-9a1.5 1.5 0 0 1 1.432-1.499zM5.562 3H13V1.78a.5.5 0 0 0-.621-.484zM1.5 4a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5z" ]
-              []
+  div [ class "ticket-picker" ]
+    [ div [ class "step-selector" ]
+      [ view_step model.step Departure_From_Step "Udrejse"
+      , view_separator
+      , view_step model.step Ticket_Step "Billet"
+      , view_separator
+      , view_step model.step Departure_Step "Afgang"
+      , view_separator
+      , div [ class "confirm-wrapper" ]
+        [ div [ class "confirm-button", onClick (StepClicked Confirm_Pay_Step) ]
+          [ text "Bekræft og betal"
+          , div [ class "confirm-icon" ]
+            [ svg
+              [ Svg.Attributes.width "1rem"
+              , Svg.Attributes.height "1rem"
+              ]
+              [ path
+                [ d "M12.136.326A1.5 1.5 0 0 1 14 1.78V3h.5A1.5 1.5 0 0 1 16 4.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 13.5v-9a1.5 1.5 0 0 1 1.432-1.499zM5.562 3H13V1.78a.5.5 0 0 0-.621-.484zM1.5 4a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5z" ]
+                []
+              ]
             ]
           ]
         ]
       ]
+    , div [ class "step-panel" ] [ view_step_panel model ]
     ]
-  , div
-    [ style "margin-top" "2rem"
-    , style "background-color" Theme.background
-    , style "width" "52rem"
-    , style "border-radius" "1rem"
-    , style "padding" "1rem"
-    , style "box-sizing" "border-box"
-    ]
-    [ view_step_panel model ]
-  ]
 
 view : Model -> Html Msg
 view model =
-  div
-  [ style "width" "100%"
-  , style "height" "100vh"
-  , style "box-sizing" "border-box"
-  , style "background-image" "url('/asset/background.jpg')"
-  , style "background-size" "cover"
-  , style "background-position" "center"
-  , style "background-repeat" "no-repeat"
-  , style "overflow" "hidden"
-  ]
-  [ div
-    [ style "display" "flex"
-    , style "flex-direction" "column"
-    , style "width" "100%"
-    , style "height" "100%"
-    , style "padding" "2rem"
-    , style "box-sizing" "border-box"
-    , style "overflow-y" "auto"
+  div [ class "app" ]
+    [ div [ class "app-scroll" ]
+      [ view_header
+      , view_ticket_picker model
+      ]
     ]
-    [ view_header
-    , view_ticket_picker model
-    ]
-  ]

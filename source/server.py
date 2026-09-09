@@ -68,12 +68,12 @@ FOREIGN KEY (ferry_id) REFERENCES ferries(id)
 connection.execute("""
 CREATE TABLE IF NOT EXISTS departures(
 id INTEGER PRIMARY KEY AUTOINCREMENT,
-operator_id INTEGER NOT NULL,
+user_id INTEGER NOT NULL,
 ferry_id INTEGER NOT NULL,
 harbour_id INTEGER NOT NULL,
 time DATETIME NOT NULL,
 canceled INTEGER NOT NULL DEFAULT 0,
-FOREIGN KEY (operator_id) REFERENCES users(id),
+FOREIGN KEY (user_id) REFERENCES users(id),
 FOREIGN KEY (ferry_id) REFERENCES ferries(id),
 FOREIGN KEY (harbour_id) REFERENCES harbours(id)
 )
@@ -83,10 +83,10 @@ connection.execute("""
 CREATE TABLE IF NOT EXISTS tickets(
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 departure_id INTEGER NOT NULL,
-customer_id INTEGER NOT NULL,
+user_id INTEGER NOT NULL,
 category TEXT NOT NULL,
 FOREIGN KEY (departure_id) REFERENCES departures(id),
-FOREIGN KEY (customer_id) REFERENCES users(id)
+FOREIGN KEY (user_id) REFERENCES users(id)
 )
 """)
 
@@ -94,6 +94,7 @@ connection.execute("""
 CREATE TABLE IF NOT EXISTS persons(
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 ticket_id INTEGER NOT NULL,
+name TEXT NOT NULL,
 birthday DATE NOT NULL,
 FOREIGN KEY (ticket_id) REFERENCES tickets(id)
 )
@@ -157,6 +158,11 @@ def post_users():
 
   return result
 
+def resolve_users(connection, id):
+  query = "SELECT * FROM users WHERE id = ?"
+  query_result = connection.execute(query, (id,))
+  return query_result.fetchone()
+
 @app.get("/api/v1/users")
 def get_users():
   id = request.args.get("id", type=int)
@@ -169,9 +175,7 @@ def get_users():
 
   connection = get_connection()
 
-  query = "SELECT * FROM users WHERE id = ?"
-  query_result = connection.execute(query, (id,))
-  result = (jsonify(query_result.fetchone()), 200)
+  result = (jsonify(resolve_users(connection, id)), 200)
 
   return result
 
@@ -443,13 +447,13 @@ def patch_harbours():
 
 @app.post("/api/v1/departures")
 def post_departure():
-  operator_id = request.args.get("operator_id", type=int)
+  user_id = request.args.get("user_id", type=int)
   ferry_id = request.args.get("ferry_id", type=int)
   harbour_id = request.args.get("harbour_id", type=int)
   time = request.args.get("time", type=datetime.fromisoformat)
 
-  if operator_id is None:
-    return jsonify(message="Missing or invalid operator_id"), 400
+  if user_id is None:
+    return jsonify(message="Missing or invalid user_id"), 400
 
   if ferry_id is None:
     return jsonify(message="Missing or invalid ferry_id"), 400
@@ -465,15 +469,15 @@ def post_departure():
   try:
     operator = connection.execute(
       "SELECT id FROM users WHERE id = ? AND role = 'operator'",
-      (operator_id,)
+      (user_id,)
     ).fetchone()
 
     if operator is None:
       raise ValueError("User does not exist or is not an operator")
 
     connection.execute(
-      "INSERT INTO departures (operator_id, ferry_id, harbour_id, time) VALUES (?, ?, ?, ?)",
-      (operator_id, ferry_id, harbour_id, time.isoformat())
+      "INSERT INTO departures (user_id, ferry_id, harbour_id, time) VALUES (?, ?, ?, ?)",
+      (user_id, ferry_id, harbour_id, time.isoformat())
     )
 
     connection.commit()
@@ -487,27 +491,26 @@ def post_departure():
 
   return result
 
-@app.get("/api/v1/departures")
-def get_departures():
-  harbour_id = request.args.get("harbour_id", type=int)
-  limit = request.args.get("limit", type=int, default=-1)
+def resolve_departures(connection, id=None, harbour_id=None, limit=None):
+  if id is not None:
+    query = "SELECT * FROM departures WHERE id = ?"
+    query_result = connection.execute(query, (id,))
 
-  if harbour_id is None:
-    return jsonify(message="Missing or invalid harbour_id"), 400
+  elif harbour_id is not None and limit is not None:
+    query = "SELECT * FROM departures WHERE harbour_id = ? LIMIT ?"
+    query_result = connection.execute(query, (harbour_id, limit))
 
-  connection = get_connection()
-
-  query = "SELECT * FROM departures WHERE harbour_id = ? LIMIT ?"
-  query_result = connection.execute(query, (harbour_id, limit))
+  else:
+    raise ValueError("Missing or invalid id or habour_id and limit")
 
   departures = query_result.fetchall()
   for departure in departures:
     query = "SELECT * FROM users WHERE id = ?"
-    query_result = connection.execute(query, (departure.get("operator_id"),))
+    query_result = connection.execute(query, (departure.get("user_id"),))
     user = query_result.fetchone()
 
-    departure["operator"] = user
-    del departure["operator_id"]
+    departure["user"] = user
+    del departure["user_id"]
 
     query = "SELECT * FROM ferries WHERE id = ?"
     query_result = connection.execute(query, (departure.get("ferry_id"),))
@@ -523,7 +526,24 @@ def get_departures():
     departure["harbour"] = harbour
     del departure["harbour_id"]
 
-  result = (jsonify(departures), 200)
+  return departures
+
+@app.get("/api/v1/departures")
+def get_departures():
+  harbour_id = request.args.get("harbour_id", type=int)
+  limit = request.args.get("limit", type=int, default=-1)
+
+  if harbour_id is None:
+    return jsonify(message="Missing or invalid harbour_id"), 400
+
+  connection = get_connection()
+
+  try:
+    departures = resolve_departures(connection, harbour_id, limit)
+    result = jsonify(departures), 200
+
+  except ValueError as error:
+    result = jsonify(message=str(error)), 400
 
   return result
 
@@ -574,23 +594,28 @@ class Variant(Enum):
 @app.post("/api/v1/tickets")
 def post_tickets():
   departure_id = request.args.get("departure_id", type=int)
-  customer_id = request.args.get("customer_id", type=int)
+  user_id = request.args.get("user_id", type=int)
   category = request.args.get("category", type=Category)
-  birthday = request.args.get("birthday", type=  date.fromisoformat)
+  name = request.args.get("name", type=str)
+  birthday = request.args.get("birthday", type=date.fromisoformat)
   variant = request.args.get("variant", type=Variant)
   identification = request.args.get("identification", type=str)
 
   if departure_id is None:
     return jsonify(message="Missing or invalid departure_id"), 400
 
-  if customer_id is None:
-    return jsonify(message="Missing or invalid customer_id"), 400
+  if user_id is None:
+    return jsonify(message="Missing or invalid user_id"), 400
 
   if category is None:
     return jsonify(message="Missing or invalid category"), 400
 
-  if category == Category.PERSON and birthday is None:
-    return jsonify(message="Missing or invalid birthday"), 400
+  if category == Category.PERSON:
+    if name is None:
+      return jsonify(message="Missing or invalid name"), 400
+
+    if birthday is None:
+      return jsonify(message="Missing or invalid birthday"), 400
 
   if category == Category.VEHICLE:
     if variant is None:
@@ -603,8 +628,8 @@ def post_tickets():
 
   try:
     cursor = connection.execute(
-      "INSERT INTO tickets (departure_id, customer_id, category) VALUES (?, ?, ?)",
-      (departure_id, customer_id, category.value)
+      "INSERT INTO tickets (departure_id, user_id, category) VALUES (?, ?, ?)",
+      (departure_id, user_id, category.value)
     )
 
     ticket_id = cursor.lastrowid
@@ -632,22 +657,37 @@ def post_tickets():
 
 @app.get("/api/v1/tickets")
 def get_tickets():
-  customer_id = request.args.get("customer_id", type=int)
+  user_id = request.args.get("user_id", type=int)
 
-  if customer_id is None:
-    return jsonify(message="Error getting tickets, no customer id supplied"), 400
+  if user_id is None:
+    return jsonify(message="Error getting tickets, no user_id supplied"), 400
 
   connection = get_connection()
 
   query = """
-    SELECT tickets.*, persons.birthday, vehicles.variant, vehicles.identification FROM tickets
+    SELECT tickets.*, persons.birthday, persons.name, vehicles.variant, vehicles.identification
+    FROM tickets
     LEFT JOIN persons ON persons.ticket_id = tickets.id
     LEFT JOIN vehicles ON vehicles.ticket_id = tickets.id
-    WHERE tickets.customer_id = ?
+    WHERE tickets.user_id = ?
   """
 
-  query_result = connection.execute(query, (customer_id,))
-  result = (jsonify(query_result.fetchall()), 200)
+  query_result = connection.execute(query, (user_id,))
+  tickets = query_result.fetchall()
+
+  for ticket in tickets:
+    try:
+      ticket["departure"] = resolve_departures(connection, id=ticket.get("departure_id"))[0]
+      del ticket["departure_id"]
+
+      ticket["user"] = resolve_users(connection, ticket.get("user_id"))
+      del ticket["user_id"]
+
+    except ValueError as error:
+      return jsonify(message=str(error)), 400
+
+
+  result = jsonify(tickets), 200
 
   return result
 
