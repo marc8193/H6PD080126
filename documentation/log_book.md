@@ -41,3 +41,8 @@ opdateret.
 Navigationen i rejsevælgeren blev implementeret, hvorefter dens placering og udseende blev
 finpudset. Udrejsepanelet blev udarbejdet med data fra API'et, som samtidig blev tilpasset og
 finpudset.
+
+## Dag 9 – 09/09-2026
+
+API'et blev udvidet med yderligere data, og klientkoden blev omstruktureret for at gøre den mere
+overskuelig.
