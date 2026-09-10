@@ -46,3 +46,9 @@ finpudset.
 
 API'et blev udvidet med yderligere data, og klientkoden blev omstruktureret for at gøre den mere
 overskuelig.
+
+# Dag 10 – 10/09-2026
+
+Casebeskrivelsen og problemformuleringen blev omskrevet på baggrund af feedback fra vejleder, så
+det fremgår tydeligt, at systemet omhandler færgebilletter. Ydermere blev billetvælgeren
+udarbejdet, så kunden kan vælge og oprette de ønskede billetter.

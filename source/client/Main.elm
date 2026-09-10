@@ -1,14 +1,14 @@
 module Main exposing (..)
 
 import Browser
+import Dict exposing (Dict)
 import Html exposing (Html, div, h4, p, span, text, input)
 import Html.Attributes exposing (class, classList, placeholder, required, type_)
-import Html.Events exposing (onBlur, onClick, onInput)
+import Html.Events exposing (onBlur, onClick, onInput, onMouseLeave)
 import Http
 import Json.Decode as Decode
 import Svg exposing (path, svg)
 import Svg.Attributes exposing (d, fill, viewBox)
-
 
 -- MAIN
 
@@ -34,8 +34,9 @@ type alias Model =
   , harbours : List Harbour
   , harbour : Maybe Harbour
   , ticket_requests : List Ticket_Request
-  , ticket_responses : List Ticket_Response
+  , ticket_responses : Dict Int Ticket_Response
   , is_create_ticket_expanded : Bool
+  , is_vehicle_variant_expanded : Bool
   }
 
 type alias Ferry =
@@ -78,9 +79,28 @@ type alias Ticket_Request =
 type alias Person_Data = { name : String, birthday : String }
 
 type Variant = Car | Truck | Bicycle
+variants : List Variant
+variants = [ Car, Truck, Bicycle ]
+variant_to_string : Variant -> String
+variant_to_string variant =
+  case variant of
+    Car -> "Bil"
+    Truck -> "Lastbil"
+    Bicycle -> "Cykel"
+
 type alias Vehicle_Data = { variant : Variant, identification : String }
 
-type Category = Person Person_Data | Pet | Breakfast | Firstclass | Vehicle Vehicle_Data
+type Category = Person | Pet | Breakfast | Firstclass | Vehicle
+categories : List Category
+categories = [ Person, Pet, Breakfast, Firstclass, Vehicle ]
+category_to_string : Category -> String
+category_to_string category =
+  case category of
+    Person -> "Person"
+    Pet -> "Kæledyr"
+    Breakfast -> "Morgenmad"
+    Firstclass -> "Førsteklasse"
+    Vehicle -> "Køretøj"
 
 type alias Ticket_Response =
   { departure_id : Int
@@ -140,10 +160,11 @@ init flags =
     , step = Ticket_Step
     , harbour = Nothing
     , ticket_requests = []
-    , ticket_responses = []
+    , ticket_responses = Dict.empty
     , departures = []
     , harbours = []
     , is_create_ticket_expanded = False
+    , is_vehicle_variant_expanded = False
     }
   , Cmd.batch
       [ getHarbours flags.server_url
@@ -181,6 +202,10 @@ type Msg
   = StepClicked Step
   | Harbour_Selected Harbour
   | Create_Ticket_Clicked
+  | Step_Panel_Leaved
+  | Category_Clicked Category
+  | Variant_Dropdown_Clicked
+  | Variant_Clicked Variant Ticket_Response
   | Ticket_Validate Ticket_Field
   | Ticket_Changed Ticket_Field String
   | GotDepartures (Result Http.Error (List Departure))
@@ -206,6 +231,30 @@ update msg model =
                                   in ( model, Cmd.none )
 
     Create_Ticket_Clicked -> ( { model | is_create_ticket_expanded = True }, Cmd.none )
+    Step_Panel_Leaved ->
+      ( { model
+          | is_create_ticket_expanded = False
+          , is_vehicle_variant_expanded = False
+        }, Cmd.none )
+
+    Category_Clicked category ->
+      let ticket_id = Dict.size model.ticket_responses
+      in
+      ( { model
+          | is_create_ticket_expanded = False
+          , ticket_responses =
+              Dict.insert ticket_id
+                { departure_id = -1
+                , user_id = -1
+                , category = category
+                }
+                model.ticket_responses
+        }
+      , Cmd.none
+      )
+
+    Variant_Dropdown_Clicked -> ( { model | is_vehicle_variant_expanded = True }, Cmd.none )
+    Variant_Clicked variant ticket -> ( { model | is_vehicle_variant_expanded = False }, Cmd.none )
 
     Ticket_Changed field value ->
       case field of
@@ -282,43 +331,162 @@ view_radio_button to_Msg current item =
     ]
     [ span [ class "radio-button-label" ] [ text item.name ] ]
 
-view_ticket : Int -> Ticket_Response -> Html Msg
-view_ticket index ticket =
+view_person_ticket_fields : Html Msg
+view_person_ticket_fields =
+  div [ class "ticket-fields" ]
+  [ input
+    [ class "ticket-input"
+    , placeholder "Fornavn"
+    , required True
+    , onBlur (Ticket_Validate Ticket_First_Name)
+    , onInput (Ticket_Changed Ticket_First_Name)
+    ] []
+  , input
+    [ class "ticket-input"
+    , placeholder "Efternavn"
+    , required True
+    , onBlur (Ticket_Validate Ticket_Last_Name)
+    , onInput (Ticket_Changed Ticket_Last_Name)
+    ] []
+  , input
+    [ class "ticket-input"
+    , type_ "date"
+    , required True
+    , onBlur (Ticket_Validate Ticket_Date_Of_Birth)
+    , onInput (Ticket_Changed Ticket_Date_Of_Birth)
+    ] []
+  ]
+
+resolve_variant : Ticket_Response -> Variant -> Html Msg
+resolve_variant ticket variant =
+  div [ class "dropdown-option", onClick (Variant_Clicked variant ticket) ]
+    ((case variant of
+      Car ->
+        [ svg
+          [ Svg.Attributes.width "1rem"
+          , Svg.Attributes.height "1rem"
+          ]
+          [ path
+            [ d "M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" ]
+            []
+          ]
+        ]
+
+      Truck ->
+        [ svg
+          [ Svg.Attributes.width "1rem"
+          , Svg.Attributes.height "1rem"
+          ]
+          [ path [ d "M8 7.982C9.664 6.309 13.825 9.236 8 13 2.175 9.236 6.336 6.31 8 7.9822" ] []
+          , path [ d "M3.75 0a1 1 0 0 0-.8.4L.1 4.2a.5.5 0 0 0-.1.3V15a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4.5a.5.5 0 0 0-.1-.3L13.05.4a1 1 0 0 0-.8-.4zm0 1H7.5v3h-6zM8.5 4V1h3.75l2.25 3zM15 5v10H1V5z" ] []
+          ]
+        ]
+
+      Bicycle ->
+        [ svg
+          [ Svg.Attributes.width "1rem"
+          , Svg.Attributes.height "1rem"
+          ]
+          [ path [ d "M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6" ] []
+          , path [ d "M13.997 5.17a5 5 0 0 0-8.101-4.09A5 5 0 0 0 1.28 9.342a5 5 0 0 0 8.336 5.109 3.5 3.5 0 0 0 5.201-4.065 3.001 3.001 0 0 0-.822-5.216zm-1-.034a1 1 0 0 0 .668.977 2.001 2.001 0 0 1 .547 3.478 1 1 0 0 0-.341 1.113 2.5 2.5 0 0 1-3.715 2.905 1 1 0 0 0-1.262.152 4 4 0 0 1-6.67-4.087 1 1 0 0 0-.2-1 4 4 0 0 1 3.693-6.61 1 1 0 0 0 .8-.2 4 4 0 0 1 6.48 3.273z" ] []
+          ]
+        ]
+    ) ++
+      [ span [ class "dropdown-option-text" ] [ text (variant_to_string variant) ] ]
+    )
+
+view_vehicle_ticket_fields : Model -> Ticket_Response -> Html Msg
+view_vehicle_ticket_fields model ticket =
+  div [ class "select-variant" ]
+  [ span
+    [ class "select-variant-text", onClick Variant_Dropdown_Clicked ]
+    [ text "Variant" ]
+  , div
+    [ classList
+      [ ( "dropdown", True )
+      , ( "selected", model.is_vehicle_variant_expanded )
+      ]
+    ]
+    (List.map (resolve_variant ticket) variants)
+  ]
+
+view_ticket : Model -> Ticket_Response -> Html Msg
+view_ticket model ticket =
   div [ class "ticket" ]
-    [ div [ class "ticket-label" ] [ text "Person 1" ]
+    [ div [ class "ticket-label" ] [ text (category_to_string ticket.category) ]
     , div [ class "ticket-divider" ]
       [ div [ class "ticket-divider-dot" ] []
       , div [ class "ticket-divider-line" ] []
       , div [ class "ticket-divider-dot" ] []
       ]
-    , div [ class "ticket-fields" ]
-      [ input
-        [ class "ticket-input"
-        , placeholder "Fornavn"
-        , required True
-        , onBlur (Ticket_Validate Ticket_First_Name)
-        , onInput (Ticket_Changed Ticket_First_Name)
-        ] []
-      , input
-        [ class "ticket-input"
-        , placeholder "Efternavn"
-        , required True
-        , onBlur (Ticket_Validate Ticket_Last_Name)
-        , onInput (Ticket_Changed Ticket_Last_Name)
-        ] []
-      , div [ class "ticket-date-row" ]
-        [ input
-          [ class "ticket-input"
-          , type_ "date"
-          , required True
-          , onBlur (Ticket_Validate Ticket_Date_Of_Birth)
-          , onInput (Ticket_Changed Ticket_Date_Of_Birth)
-          ] []
-        ]
-      , div [ class "ticket-price" ]
-        [ span [ class "ticket-price-text" ] [ text "-- DKK" ] ]
-      ]
+    , case ticket.category of
+        Person -> view_person_ticket_fields
+        Pet -> div [] []
+        Breakfast -> div [] []
+        Firstclass -> div [] []
+        Vehicle -> view_vehicle_ticket_fields model ticket
+    , div [ class "ticket-price" ] [ span [ class "ticket-price-text" ] [ text "-- DKK" ] ]
     ]
+
+resolve_category : Category -> Html Msg
+resolve_category category =
+  div [ class "dropdown-option", onClick (Category_Clicked category) ]
+    ((case category of
+      Person ->
+        [ svg
+          [ Svg.Attributes.width "1rem"
+          , Svg.Attributes.height "1rem"
+          ]
+          [ path
+            [ d "M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" ]
+            []
+          ]
+        ]
+
+      Pet ->
+        [ svg
+          [ Svg.Attributes.width "1rem"
+          , Svg.Attributes.height "1rem"
+          ]
+          [ path [ d "M8 7.982C9.664 6.309 13.825 9.236 8 13 2.175 9.236 6.336 6.31 8 7.9822" ] []
+          , path [ d "M3.75 0a1 1 0 0 0-.8.4L.1 4.2a.5.5 0 0 0-.1.3V15a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4.5a.5.5 0 0 0-.1-.3L13.05.4a1 1 0 0 0-.8-.4zm0 1H7.5v3h-6zM8.5 4V1h3.75l2.25 3zM15 5v10H1V5z" ] []
+          ]
+        ]
+
+      Breakfast ->
+        [ svg
+          [ Svg.Attributes.width "1rem"
+          , Svg.Attributes.height "1rem"
+          ]
+          [ path [ d "M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6" ] []
+          , path [ d "M13.997 5.17a5 5 0 0 0-8.101-4.09A5 5 0 0 0 1.28 9.342a5 5 0 0 0 8.336 5.109 3.5 3.5 0 0 0 5.201-4.065 3.001 3.001 0 0 0-.822-5.216zm-1-.034a1 1 0 0 0 .668.977 2.001 2.001 0 0 1 .547 3.478 1 1 0 0 0-.341 1.113 2.5 2.5 0 0 1-3.715 2.905 1 1 0 0 0-1.262.152 4 4 0 0 1-6.67-4.087 1 1 0 0 0-.2-1 4 4 0 0 1 3.693-6.61 1 1 0 0 0 .8-.2 4 4 0 0 1 6.48 3.273z" ] []
+          ]
+        ]
+
+      Firstclass ->
+        [ svg
+          [ Svg.Attributes.width "1rem"
+          , Svg.Attributes.height "1rem"
+          ]
+          [ path
+            [ d "M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v8A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5m1.886 6.914L15 7.151V12.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V7.15l6.614 1.764a1.5 1.5 0 0 0 .772 0M1.5 4h13a.5.5 0 0 1 .5.5v1.616L8.129 7.948a.5.5 0 0 1-.258 0L1 6.116V4.5a.5.5 0 0 1 .5-.5" ]
+            []
+          ]
+        ]
+
+      Vehicle ->
+        [ svg
+          [ Svg.Attributes.width "1rem"
+          , Svg.Attributes.height "1rem"
+          ]
+          [ path
+            [ d "M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5zm1.294 7.456A2 2 0 0 1 4.732 11h5.536a2 2 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456M12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2m9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2" ]
+            []
+          ]
+        ]
+    ) ++
+      [ span [ class "dropdown-option-text" ] [ text (category_to_string category) ] ]
+    )
 
 view_step_panel : Model -> Html Msg
 view_step_panel model =
@@ -331,20 +499,25 @@ view_step_panel model =
 
     Ticket_Step ->
       div [ class "ticket-list" ]
-        (List.indexedMap view_ticket model.ticket_responses ++
-          [ div
-              [ class "create-ticket"
-              , onClick Create_Ticket_Clicked
-              ]
+        (Dict.foldr
+          (\_ ticket views ->
+            view_ticket model ticket :: views
+          )
+          []
+          model.ticket_responses
+          ++
+          [ div [ class "create-ticket" ]
+            [ span
+              [ class "create-ticket-text", onClick Create_Ticket_Clicked ]
               [ text "Opret ny billet" ]
-
-          , div
+            , div
               [ classList
-                  [ ( "create-ticket-dropdown", True )
-                  , ( "selected", model.is_create_ticket_expanded )
-                  ]
+                [ ( "dropdown", True )
+                , ( "selected", model.is_create_ticket_expanded )
+                ]
               ]
-              []
+              (List.map resolve_category categories)
+            ]
           ]
         )
 
@@ -388,7 +561,7 @@ view_ticket_picker model =
           ]
         ]
       ]
-    , div [ class "step-panel" ] [ view_step_panel model ]
+    , div [ class "step-panel", onMouseLeave Step_Panel_Leaved ] [ view_step_panel model ]
     ]
 
 view : Model -> Html Msg
