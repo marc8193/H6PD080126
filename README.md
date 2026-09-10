@@ -2,14 +2,14 @@
 
 ## Casebeskrivelse
 
-Analog billethåndtering kan være en omfattende opgave, da det kan skabe en flaskehals ved billetlugen
-i forbindelse med køb og udlevering af billetter. Muligheden for tilkøb er begrænset, da kunden skal
-tage stilling på stedet.
+Analog håndtering af færgebilletter kan være en omfattende opgave, da det kan skabe en flaskehals
+ved billetlugen i forbindelse med køb og udlevering af billetter. Muligheden for tilkøb er
+begrænset, da kunden skal tage stilling på stedet.
 
 ## Problemformulering
 
-Hvordan kan der udvikles et sikkert billethåndteringssystem, som giver kunden mulighed for at købe
-billetter og overveje relevante tilkøb inden ankomst?
+Hvordan kan der udvikles et sikkert system til håndtering af færgebilletter, som giver kunden
+mulighed for at købe billetter og overveje relevante tilkøb inden ankomst til færgen?
 
 ## Brugerhistorier
 
