@@ -21,26 +21,11 @@ main = Browser.element
 
 -- MODEL
 
-type alias Person_Data = { name : String, birthday : String }
-
-type Variant = Car | Truck | Bicycle
-
-type alias Vehicle_Data = { variant : Variant, identification : String }
-
-type Category = Person | Pet | Breakfast | Firstclass | Vehicle
-
-type alias Ticket_Response =
-  { departure_id : Int
-  , user_id : Int
-  , category : Category
+type alias Flags =
+  { server_url : String
   }
 
-type alias User =
-  { id : Int
-  , name : String
-  , email : String
-  , role : String
-  }
+type Step = Departure_From_Step | Ticket_Step | Departure_Step | Confirm_Pay_Step
 
 type alias Harbour =
   { id : Int
@@ -50,6 +35,13 @@ type alias Harbour =
 type alias Ferry =
   { id : Int
   , name : String
+  }
+
+type alias User =
+  { id : Int
+  , name : String
+  , email : String
+  , role : String
   }
 
 type alias Departure =
@@ -72,10 +64,18 @@ type alias Ticket_Request =
   , identification : Maybe String
   }
 
-type Step = Departure_From_Step | Ticket_Step | Departure_Step | Confirm_Pay_Step
+type alias Person_Data = { name : String, birthday : String }
 
-type alias Flags =
-  { server_url : String
+type Variant = Car | Truck | Bicycle
+
+type alias Vehicle_Data = { variant : Variant, identification : String }
+
+type Category = Person | Pet | Breakfast | Firstclass | Vehicle
+
+type alias Ticket_Response =
+  { departure_id : Int
+  , user_id : Int
+  , category : Category
   }
 
 type alias Model =
@@ -226,21 +226,35 @@ update msg model =
 
           _ -> ( { model | step = step }, Cmd.none )
 
-    Harbour_Selected harbour -> ( { model | harbour = Just harbour }, Cmd.none )
-    Ticket_Validate field ->
-        case field of
-          Ticket_First_Name -> let _ = Debug.log "Validate first name" () in ( model, Cmd.none )
-          Ticket_Last_Name -> let _ = Debug.log "Validate last name" () in ( model, Cmd.none )
-          Ticket_Date_Of_Birth -> let _ = Debug.log "Validate date of birth" ()
-                                  in ( model, Cmd.none )
-
-    Create_Ticket_Clicked -> ( { model | is_create_ticket_expanded = True }, Cmd.none )
     Step_Panel_Leaved ->
       ( { model
           | is_create_ticket_expanded = False
           , is_vehicle_variant_expanded = False
         }, Cmd.none )
 
+    Got_Harbours result ->
+      case result of
+        Ok harbours ->
+            case List.head harbours of
+                Just harbour ->
+                    ( { model | harbours = harbours, harbour = Just harbour }, Cmd.none )
+
+                Nothing -> ( model, Cmd.none )
+
+        Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
+
+    Harbour_Selected harbour -> ( { model | harbour = Just harbour }, Cmd.none )
+
+    Got_Ticket_Requests result ->
+      case result of
+        Ok tickets ->
+          let _ = Debug.log "tickets" tickets
+          in ( { model | ticket_requests = tickets }
+             , get_tickets model.flags.server_url temporary_developer_customer_id)
+
+        Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
+
+    Create_Ticket_Clicked -> ( { model | is_create_ticket_expanded = True }, Cmd.none )
     Create_Ticket_Selected category ->
       let ticket_id = Dict.size model.ticket_responses
       in
@@ -261,6 +275,14 @@ update msg model =
     Vehicle_Ticket_Variant_Selected variant ticket ->
       ( { model | is_vehicle_variant_expanded = False }, Cmd.none )
 
+
+    Ticket_Validate field ->
+        case field of
+          Ticket_First_Name -> let _ = Debug.log "Validate first name" () in ( model, Cmd.none )
+          Ticket_Last_Name -> let _ = Debug.log "Validate last name" () in ( model, Cmd.none )
+          Ticket_Date_Of_Birth -> let _ = Debug.log "Validate date of birth" ()
+                                  in ( model, Cmd.none )
+
     Ticket_Changed field value ->
       case field of
           Ticket_First_Name -> let _ = Debug.log "First name input" value in ( model, Cmd.none )
@@ -276,26 +298,6 @@ update msg model =
 
         Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
 
-    Got_Harbours result ->
-      case result of
-        Ok harbours ->
-            case List.head harbours of
-                Just harbour ->
-                    ( { model | harbours = harbours, harbour = Just harbour }, Cmd.none )
-
-                Nothing -> ( model, Cmd.none )
-
-        Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
-
-    Got_Ticket_Requests result ->
-      case result of
-        Ok tickets ->
-          let _ = Debug.log "tickets" tickets
-          in ( { model | ticket_requests = tickets }
-             , get_tickets model.flags.server_url temporary_developer_customer_id)
-
-        Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
-
 -- VIEW WIDGETS
 
 type alias Radio_Button_Item = { id : Int, name : String }
@@ -308,133 +310,41 @@ view_radio_button :
 
 view_radio_button to_msg current item =
   div
-    [ classList [ ( "radio-button", True ), ( "selected", current == Just item ) ]
-    , onClick (to_msg item)
-    ]
-    [ span [ class "radio-button-label" ] [ text item.name ] ]
+  [ classList [ ( "radio-button", True ), ( "selected", current == Just item ) ]
+  , onClick (to_msg item)
+  ]
+  [ span [ class "radio-button-label" ] [ text item.name ] ]
 
 -- VIEW
 
 view_departure : Departure -> Html Msg
 view_departure departure =
   div []
-    [ p [] [ text ("Afgang: " ++ departure.time) ]
-    , p [] [ text ("Færge: " ++ departure.ferry.name) ]
-    , p [] [ text ("Havn: " ++ departure.harbour.name) ]
-    ]
-
-resolve_category : Category -> Html Msg
-resolve_category category =
-  div [ class "dropdown-option", onClick (Create_Ticket_Selected category) ]
-    ((case category of
-      Person ->
-        [ svg
-          [ Svg.Attributes.width "1rem"
-          , Svg.Attributes.height "1rem"
-          ]
-          [ path
-            [ d "M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" ]
-            []
-          ]
-        ]
-
-      Pet ->
-        [ svg
-          [ Svg.Attributes.width "1rem"
-          , Svg.Attributes.height "1rem"
-          ]
-          [ path [ d "M8 7.982C9.664 6.309 13.825 9.236 8 13 2.175 9.236 6.336 6.31 8 7.9822" ] []
-          , path [ d "M3.75 0a1 1 0 0 0-.8.4L.1 4.2a.5.5 0 0 0-.1.3V15a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4.5a.5.5 0 0 0-.1-.3L13.05.4a1 1 0 0 0-.8-.4zm0 1H7.5v3h-6zM8.5 4V1h3.75l2.25 3zM15 5v10H1V5z" ] []
-          ]
-        ]
-
-      Breakfast ->
-        [ svg
-          [ Svg.Attributes.width "1rem"
-          , Svg.Attributes.height "1rem"
-          ]
-          [ path [ d "M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6" ] []
-          , path [ d "M13.997 5.17a5 5 0 0 0-8.101-4.09A5 5 0 0 0 1.28 9.342a5 5 0 0 0 8.336 5.109 3.5 3.5 0 0 0 5.201-4.065 3.001 3.001 0 0 0-.822-5.216zm-1-.034a1 1 0 0 0 .668.977 2.001 2.001 0 0 1 .547 3.478 1 1 0 0 0-.341 1.113 2.5 2.5 0 0 1-3.715 2.905 1 1 0 0 0-1.262.152 4 4 0 0 1-6.67-4.087 1 1 0 0 0-.2-1 4 4 0 0 1 3.693-6.61 1 1 0 0 0 .8-.2 4 4 0 0 1 6.48 3.273z" ] []
-          ]
-        ]
-
-      Firstclass ->
-        [ svg
-          [ Svg.Attributes.width "1rem"
-          , Svg.Attributes.height "1rem"
-          ]
-          [ path
-            [ d "M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v8A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5m1.886 6.914L15 7.151V12.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V7.15l6.614 1.764a1.5 1.5 0 0 0 .772 0M1.5 4h13a.5.5 0 0 1 .5.5v1.616L8.129 7.948a.5.5 0 0 1-.258 0L1 6.116V4.5a.5.5 0 0 1 .5-.5" ]
-            []
-          ]
-        ]
-
-      Vehicle ->
-        [ svg
-          [ Svg.Attributes.width "1rem"
-          , Svg.Attributes.height "1rem"
-          ]
-          [ path
-            [ d "M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5zm1.294 7.456A2 2 0 0 1 4.732 11h5.536a2 2 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456M12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2m9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2" ]
-            []
-          ]
-        ]
-    ) ++
-      [ span [ class "dropdown-option-text" ] [ text (category_to_string category) ] ]
-    )
-
-resolve_variant : Ticket_Response -> Variant -> Html Msg
-resolve_variant ticket variant =
-  div [ class "dropdown-option", onClick (Vehicle_Ticket_Variant_Selected variant ticket) ]
-    ((case variant of
-      Car ->
-        [ svg
-          [ Svg.Attributes.width "1rem"
-          , Svg.Attributes.height "1rem"
-          ]
-          [ path
-            [ d "M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" ]
-            []
-          ]
-        ]
-
-      Truck ->
-        [ svg
-          [ Svg.Attributes.width "1rem"
-          , Svg.Attributes.height "1rem"
-          ]
-          [ path [ d "M8 7.982C9.664 6.309 13.825 9.236 8 13 2.175 9.236 6.336 6.31 8 7.9822" ] []
-          , path [ d "M3.75 0a1 1 0 0 0-.8.4L.1 4.2a.5.5 0 0 0-.1.3V15a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4.5a.5.5 0 0 0-.1-.3L13.05.4a1 1 0 0 0-.8-.4zm0 1H7.5v3h-6zM8.5 4V1h3.75l2.25 3zM15 5v10H1V5z" ] []
-          ]
-        ]
-
-      Bicycle ->
-        [ svg
-          [ Svg.Attributes.width "1rem"
-          , Svg.Attributes.height "1rem"
-          ]
-          [ path [ d "M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6" ] []
-          , path [ d "M13.997 5.17a5 5 0 0 0-8.101-4.09A5 5 0 0 0 1.28 9.342a5 5 0 0 0 8.336 5.109 3.5 3.5 0 0 0 5.201-4.065 3.001 3.001 0 0 0-.822-5.216zm-1-.034a1 1 0 0 0 .668.977 2.001 2.001 0 0 1 .547 3.478 1 1 0 0 0-.341 1.113 2.5 2.5 0 0 1-3.715 2.905 1 1 0 0 0-1.262.152 4 4 0 0 1-6.67-4.087 1 1 0 0 0-.2-1 4 4 0 0 1 3.693-6.61 1 1 0 0 0 .8-.2 4 4 0 0 1 6.48 3.273z" ] []
-          ]
-        ]
-    ) ++
-      [ span [ class "dropdown-option-text" ] [ text (variant_to_string variant) ] ]
-    )
-
-view_vehicle_ticket_fields : Model -> Ticket_Response -> Html Msg
-view_vehicle_ticket_fields model ticket =
-  div [ class "select-variant" ]
-  [ span
-    [ class "select-variant-text", onClick Vehicle_Ticket_Variant_Clicked ]
-    [ text "Variant" ]
-  , div
-    [ classList
-      [ ( "dropdown", True )
-      , ( "selected", model.is_vehicle_variant_expanded )
-      ]
-    ]
-    (List.map (resolve_variant ticket) variants)
+  [ p [] [ text ("Afgang: " ++ departure.time) ]
+  , p [] [ text ("Færge: " ++ departure.ferry.name) ]
+  , p [] [ text ("Havn: " ++ departure.harbour.name) ]
   ]
+
+view_header : Html Msg
+view_header =
+  div [ class "header" ]
+  [ h4 [ class "header-title" ]
+    [ text "Læsøfærgen. "
+    , span [ class "header-subtitle" ] [ text "Nemt til og fra Læsø" ]
+    ]
+  ]
+
+view_step : Step -> Step -> String -> Html Msg
+view_step current_step step label =
+  div
+  [ classList [ ( "step", True ), ( "selected", current_step == step ) ]
+  , onClick (Step_Clicked step)
+  ]
+  [ text label ]
+
+view_separator : Html Msg
+view_separator =
+  div [ class "step-separator" ] []
 
 view_person_ticket_fields : Html Msg
 view_person_ticket_fields =
@@ -462,74 +372,175 @@ view_person_ticket_fields =
     ] []
   ]
 
+resolve_variant : Ticket_Response -> Variant -> Html Msg
+resolve_variant ticket variant =
+  div [ class "dropdown-option", onClick (Vehicle_Ticket_Variant_Selected variant ticket) ]
+  ((case variant of
+    Car ->
+      [ svg
+        [ Svg.Attributes.width "1rem"
+        , Svg.Attributes.height "1rem"
+        ]
+        [ path
+          [ d "M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" ]
+          []
+        ]
+      ]
+
+    Truck ->
+      [ svg
+        [ Svg.Attributes.width "1rem"
+        , Svg.Attributes.height "1rem"
+        ]
+        [ path [ d "M8 7.982C9.664 6.309 13.825 9.236 8 13 2.175 9.236 6.336 6.31 8 7.9822" ] []
+        , path [ d "M3.75 0a1 1 0 0 0-.8.4L.1 4.2a.5.5 0 0 0-.1.3V15a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4.5a.5.5 0 0 0-.1-.3L13.05.4a1 1 0 0 0-.8-.4zm0 1H7.5v3h-6zM8.5 4V1h3.75l2.25 3zM15 5v10H1V5z" ] []
+        ]
+      ]
+
+    Bicycle ->
+      [ svg
+        [ Svg.Attributes.width "1rem"
+        , Svg.Attributes.height "1rem"
+        ]
+        [ path [ d "M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6" ] []
+        , path [ d "M13.997 5.17a5 5 0 0 0-8.101-4.09A5 5 0 0 0 1.28 9.342a5 5 0 0 0 8.336 5.109 3.5 3.5 0 0 0 5.201-4.065 3.001 3.001 0 0 0-.822-5.216zm-1-.034a1 1 0 0 0 .668.977 2.001 2.001 0 0 1 .547 3.478 1 1 0 0 0-.341 1.113 2.5 2.5 0 0 1-3.715 2.905 1 1 0 0 0-1.262.152 4 4 0 0 1-6.67-4.087 1 1 0 0 0-.2-1 4 4 0 0 1 3.693-6.61 1 1 0 0 0 .8-.2 4 4 0 0 1 6.48 3.273z" ] []
+        ]
+      ]
+  ) ++
+    [ span [ class "dropdown-option-text" ] [ text (variant_to_string variant) ] ]
+  )
+
+view_vehicle_ticket_fields : Model -> Ticket_Response -> Html Msg
+view_vehicle_ticket_fields model ticket =
+  div [ class "select-variant" ]
+  [ span
+    [ class "select-variant-text", onClick Vehicle_Ticket_Variant_Clicked ]
+    [ text "Variant" ]
+  , div
+    [ classList
+      [ ( "dropdown", True )
+      , ( "selected", model.is_vehicle_variant_expanded )
+      ]
+    ]
+    (List.map (resolve_variant ticket) variants)
+  ]
+
 view_ticket : Model -> Ticket_Response -> Html Msg
 view_ticket model ticket =
   div [ class "ticket" ]
-    [ div [ class "ticket-label" ] [ text (category_to_string ticket.category) ]
-    , div [ class "ticket-divider" ]
-      [ div [ class "ticket-divider-dot" ] []
-      , div [ class "ticket-divider-line" ] []
-      , div [ class "ticket-divider-dot" ] []
-      ]
-    , case ticket.category of
-        Person -> view_person_ticket_fields
-        Pet -> div [] []
-        Breakfast -> div [] []
-        Firstclass -> div [] []
-        Vehicle -> view_vehicle_ticket_fields model ticket
-    , div [ class "ticket-price" ] [ span [ class "ticket-price-text" ] [ text "-- DKK" ] ]
+  [ div [ class "ticket-label" ] [ text (category_to_string ticket.category) ]
+  , div [ class "ticket-divider" ]
+    [ div [ class "ticket-divider-dot" ] []
+    , div [ class "ticket-divider-line" ] []
+    , div [ class "ticket-divider-dot" ] []
     ]
+  , case ticket.category of
+      Person -> view_person_ticket_fields
+      Pet -> div [] []
+      Breakfast -> div [] []
+      Firstclass -> div [] []
+      Vehicle -> view_vehicle_ticket_fields model ticket
+  , div [ class "ticket-price" ] [ span [ class "ticket-price-text" ] [ text "-- DKK" ] ]
+  ]
+
+resolve_category : Category -> Html Msg
+resolve_category category =
+  div [ class "dropdown-option", onClick (Create_Ticket_Selected category) ]
+  ((case category of
+    Person ->
+      [ svg
+        [ Svg.Attributes.width "1rem"
+        , Svg.Attributes.height "1rem"
+        ]
+        [ path
+          [ d "M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" ]
+          []
+        ]
+      ]
+
+    Pet ->
+      [ svg
+        [ Svg.Attributes.width "1rem"
+        , Svg.Attributes.height "1rem"
+        ]
+        [ path [ d "M8 7.982C9.664 6.309 13.825 9.236 8 13 2.175 9.236 6.336 6.31 8 7.9822" ] []
+        , path [ d "M3.75 0a1 1 0 0 0-.8.4L.1 4.2a.5.5 0 0 0-.1.3V15a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4.5a.5.5 0 0 0-.1-.3L13.05.4a1 1 0 0 0-.8-.4zm0 1H7.5v3h-6zM8.5 4V1h3.75l2.25 3zM15 5v10H1V5z" ] []
+        ]
+      ]
+
+    Breakfast ->
+      [ svg
+        [ Svg.Attributes.width "1rem"
+        , Svg.Attributes.height "1rem"
+        ]
+        [ path [ d "M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6" ] []
+        , path [ d "M13.997 5.17a5 5 0 0 0-8.101-4.09A5 5 0 0 0 1.28 9.342a5 5 0 0 0 8.336 5.109 3.5 3.5 0 0 0 5.201-4.065 3.001 3.001 0 0 0-.822-5.216zm-1-.034a1 1 0 0 0 .668.977 2.001 2.001 0 0 1 .547 3.478 1 1 0 0 0-.341 1.113 2.5 2.5 0 0 1-3.715 2.905 1 1 0 0 0-1.262.152 4 4 0 0 1-6.67-4.087 1 1 0 0 0-.2-1 4 4 0 0 1 3.693-6.61 1 1 0 0 0 .8-.2 4 4 0 0 1 6.48 3.273z" ] []
+        ]
+      ]
+
+    Firstclass ->
+      [ svg
+        [ Svg.Attributes.width "1rem"
+        , Svg.Attributes.height "1rem"
+        ]
+        [ path
+          [ d "M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v8A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5m1.886 6.914L15 7.151V12.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V7.15l6.614 1.764a1.5 1.5 0 0 0 .772 0M1.5 4h13a.5.5 0 0 1 .5.5v1.616L8.129 7.948a.5.5 0 0 1-.258 0L1 6.116V4.5a.5.5 0 0 1 .5-.5" ]
+          []
+        ]
+      ]
+
+    Vehicle ->
+      [ svg
+        [ Svg.Attributes.width "1rem"
+        , Svg.Attributes.height "1rem"
+        ]
+        [ path
+          [ d "M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.481 1.85a1.5 1.5 0 0 1 .329.938V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-3.998-.085A1.5 1.5 0 0 1 0 10.5zm1.294 7.456A2 2 0 0 1 4.732 11h5.536a2 2 0 0 1 .732-.732V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .294.456M12 10a2 2 0 0 1 1.732 1h.768a.5.5 0 0 0 .5-.5V8.35a.5.5 0 0 0-.11-.312l-1.48-1.85A.5.5 0 0 0 13.02 6H12zm-9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2m9 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2" ]
+          []
+        ]
+      ]
+  ) ++
+    [ span [ class "dropdown-option-text" ] [ text (category_to_string category) ] ]
+  )
 
 view_step_panel : Model -> Html Msg
 view_step_panel model =
   case model.step of
     Departure_From_Step ->
       div [ class "harbour-list" ]
-        (List.map
-          (\harbour -> view_radio_button Harbour_Selected model.harbour harbour) model.harbours
-        )
+      (List.map
+        (\harbour -> view_radio_button Harbour_Selected model.harbour harbour) model.harbours
+      )
 
     Ticket_Step ->
       div [ class "ticket-list" ]
-        (Dict.foldr
-          (\_ ticket views ->
-            view_ticket model ticket :: views
-          )
-          []
-          model.ticket_responses
-          ++
-          [ div [ class "create-ticket" ]
-            [ span
-              [ class "create-ticket-text", onClick Create_Ticket_Clicked ]
-              [ text "Opret ny billet" ]
-            , div
-              [ classList
-                [ ( "dropdown", True )
-                , ( "selected", model.is_create_ticket_expanded )
-                ]
-              ]
-              (List.map resolve_category categories)
-            ]
-          ]
+      (Dict.foldr
+        (\_ ticket views ->
+          view_ticket model ticket :: views
         )
+        []
+        model.ticket_responses
+        ++
+        [ div [ class "create-ticket" ]
+          [ span
+            [ class "create-ticket-text", onClick Create_Ticket_Clicked ]
+            [ text "Opret ny billet" ]
+          , div
+            [ classList
+              [ ( "dropdown", True )
+              , ( "selected", model.is_create_ticket_expanded )
+              ]
+            ]
+            (List.map resolve_category categories)
+          ]
+        ]
+      )
 
     Departure_Step ->
       div [] (List.map view_departure model.departures)
 
     Confirm_Pay_Step ->
       div [] [ text "Bekræft og betal" ]
-
-view_separator : Html Msg
-view_separator =
-  div [ class "step-separator" ] []
-
-view_step : Step -> Step -> String -> Html Msg
-view_step current_step step label =
-  div
-    [ classList [ ( "step", True ), ( "selected", current_step == step ) ]
-    , onClick (Step_Clicked step)
-    ]
-    [ text label ]
 
 view_ticket_picker : Model -> Html Msg
 view_ticket_picker model =
@@ -558,15 +569,6 @@ view_ticket_picker model =
         ]
       ]
     , div [ class "step-panel", onMouseLeave Step_Panel_Leaved ] [ view_step_panel model ]
-    ]
-
-view_header : Html Msg
-view_header =
-  div [ class "header" ]
-    [ h4 [ class "header-title" ]
-      [ text "Læsøfærgen. "
-      , span [ class "header-subtitle" ] [ text "Nemt til og fra Læsø" ]
-      ]
     ]
 
 view : Model -> Html Msg
