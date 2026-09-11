@@ -72,11 +72,11 @@ type alias Ticket_Request =
   , identification : Maybe String
   }
 
+type Step = Departure_From_Step | Ticket_Step | Departure_Step | Confirm_Pay_Step
+
 type alias Flags =
   { server_url : String
   }
-
-type Step = Departure_From_Step | Ticket_Step | Departure_Step | Confirm_Pay_Step
 
 type alias Model =
   { flags : Flags
