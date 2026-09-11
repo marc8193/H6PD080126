@@ -12,41 +12,27 @@ import Svg.Attributes exposing (d, fill, viewBox)
 
 -- MAIN
 
-main =
-  Browser.element
+main = Browser.element
   { init = init
   , update = update
-  , subscriptions = subscriptions
+  , subscriptions = \_ -> Sub.none
   , view = view
   }
 
 -- MODEL
 
-temporary_developer_customer_id : Int
-temporary_developer_customer_id = 1
+type alias Person_Data = { name : String, birthday : String }
 
-type Step = Departure_From_Step | Ticket_Step | Departure_Step | Confirm_Pay_Step
+type Variant = Car | Truck | Bicycle
 
-type alias Model =
-  { server_url : String
-  , step : Step
-  , departures : List Departure
-  , harbours : List Harbour
-  , harbour : Maybe Harbour
-  , ticket_requests : List Ticket_Request
-  , ticket_responses : Dict Int Ticket_Response
-  , is_create_ticket_expanded : Bool
-  , is_vehicle_variant_expanded : Bool
-  }
+type alias Vehicle_Data = { variant : Variant, identification : String }
 
-type alias Ferry =
-  { id : Int
-  , name : String
-  }
+type Category = Person | Pet | Breakfast | Firstclass | Vehicle
 
-type alias Harbour =
-  { id : Int
-  , name : String
+type alias Ticket_Response =
+  { departure_id : Int
+  , user_id : Int
+  , category : Category
   }
 
 type alias User =
@@ -54,6 +40,16 @@ type alias User =
   , name : String
   , email : String
   , role : String
+  }
+
+type alias Harbour =
+  { id : Int
+  , name : String
+  }
+
+type alias Ferry =
+  { id : Int
+  , name : String
   }
 
 type alias Departure =
@@ -76,21 +72,42 @@ type alias Ticket_Request =
   , identification : Maybe String
   }
 
-type alias Person_Data = { name : String, birthday : String }
+type alias Flags =
+  { server_url : String
+  }
 
-type Variant = Car | Truck | Bicycle
-variants : List Variant
-variants = [ Car, Truck, Bicycle ]
-variant_to_string : Variant -> String
-variant_to_string variant =
-  case variant of
-    Car -> "Bil"
-    Truck -> "Lastbil"
-    Bicycle -> "Cykel"
+type Step = Departure_From_Step | Ticket_Step | Departure_Step | Confirm_Pay_Step
 
-type alias Vehicle_Data = { variant : Variant, identification : String }
+type alias Model =
+  { flags : Flags
+  , step : Step
+  -- Harbour
+  , harbours : List Harbour
+  , harbour : Maybe Harbour
+  -- Ticket
+  , ticket_requests : List Ticket_Request
+  , ticket_responses : Dict Int Ticket_Response
+  , is_create_ticket_expanded : Bool
+  , is_vehicle_variant_expanded : Bool
+  -- Depature
+  , departures : List Departure
+  }
 
-type Category = Person | Pet | Breakfast | Firstclass | Vehicle
+init : Flags -> ( Model, Cmd Msg )
+init flags =
+  ( { flags = { server_url = flags.server_url }
+    , step = Ticket_Step
+    , harbours = []
+    , harbour = Nothing
+    , ticket_requests = []
+    , ticket_responses = Dict.empty
+    , is_create_ticket_expanded = False
+    , is_vehicle_variant_expanded = False
+    , departures = []
+    }
+  , get_harbours flags.server_url
+  )
+
 categories : List Category
 categories = [ Person, Pet, Breakfast, Firstclass, Vehicle ]
 category_to_string : Category -> String
@@ -102,123 +119,110 @@ category_to_string category =
     Firstclass -> "Førsteklasse"
     Vehicle -> "Køretøj"
 
-type alias Ticket_Response =
-  { departure_id : Int
-  , user_id : Int
-  , category : Category
-  }
+variants : List Variant
+variants = [ Car, Truck, Bicycle ]
+variant_to_string : Variant -> String
+variant_to_string variant =
+  case variant of
+    Car -> "Bil"
+    Truck -> "Lastbil"
+    Bicycle -> "Cykel"
 
-ferriesDecoder : Decode.Decoder Ferry
-ferriesDecoder =
+-- API
+
+ferries_decoder : Decode.Decoder Ferry
+ferries_decoder =
   Decode.map2 Ferry
     (Decode.field "id" Decode.int)
     (Decode.field "name" Decode.string)
 
-harboursDecoder : Decode.Decoder Harbour
-harboursDecoder =
+harbours_decoder : Decode.Decoder Harbour
+harbours_decoder =
   Decode.map2 Harbour
     (Decode.field "id" Decode.int)
     (Decode.field "name" Decode.string)
 
-usersDecoder : Decode.Decoder User
-usersDecoder =
+users_decoder : Decode.Decoder User
+users_decoder =
   Decode.map4 User
     (Decode.field "id" Decode.int)
     (Decode.field "name" Decode.string)
     (Decode.field "email" Decode.string)
     (Decode.field "role" Decode.string)
 
-departuresDecoder : Decode.Decoder Departure
-departuresDecoder =
+departures_decoder : Decode.Decoder Departure
+departures_decoder =
   Decode.map6 Departure
     (Decode.field "id" Decode.int)
-    (Decode.field "ferry" ferriesDecoder)
-    (Decode.field "harbour" harboursDecoder)
-    (Decode.field "user" usersDecoder)
+    (Decode.field "ferry" ferries_decoder)
+    (Decode.field "harbour" harbours_decoder)
+    (Decode.field "user" users_decoder)
     (Decode.field "time" Decode.string)
     (Decode.field "canceled" Decode.int)
 
-ticketsDecoder : Decode.Decoder Ticket_Request
-ticketsDecoder =
+tickets_decoder : Decode.Decoder Ticket_Request
+tickets_decoder =
   Decode.map8 Ticket_Request
     (Decode.field "id" Decode.int)
-    (Decode.field "departure" departuresDecoder)
-    (Decode.field "user" usersDecoder)
+    (Decode.field "departure" departures_decoder)
+    (Decode.field "user" users_decoder)
     (Decode.field "category" Decode.string)
     (Decode.field "name" (Decode.nullable Decode.string))
     (Decode.field "birthday" (Decode.nullable Decode.string))
     (Decode.field "variant" (Decode.nullable Decode.string))
     (Decode.field "identification" (Decode.nullable Decode.string))
 
-type alias Flags =
-  { server_url : String
-  }
-
-init : Flags -> ( Model, Cmd Msg )
-init flags =
-  ( { server_url = flags.server_url
-    , step = Ticket_Step
-    , harbour = Nothing
-    , ticket_requests = []
-    , ticket_responses = Dict.empty
-    , departures = []
-    , harbours = []
-    , is_create_ticket_expanded = False
-    , is_vehicle_variant_expanded = False
-    }
-  , Cmd.batch
-      [ getHarbours flags.server_url
-      ]
-  )
-
-type Ticket_Field = Ticket_First_Name | Ticket_Last_Name | Ticket_Date_Of_Birth
-
--- API
-
-getDepartures : String -> Int -> Cmd Msg
-getDepartures server_url harbour_id =
+get_departures : String -> Int -> Cmd Msg
+get_departures server_url harbour_id =
   Http.get
   { url = server_url ++ "/departures?harbour_id=" ++ String.fromInt harbour_id
-  , expect = Http.expectJson GotDepartures (Decode.list departuresDecoder)
+  , expect = Http.expectJson Got_Departures (Decode.list departures_decoder)
   }
 
-getHarbours : String -> Cmd Msg
-getHarbours server_url =
+get_harbours : String -> Cmd Msg
+get_harbours server_url =
   Http.get
   { url = server_url ++ "/harbours"
-  , expect = Http.expectJson GotHarbours (Decode.list harboursDecoder)
+  , expect = Http.expectJson Got_Harbours (Decode.list harbours_decoder)
   }
 
-getTickets : String -> Int -> Cmd Msg
-getTickets server_url user_id =
+get_tickets : String -> Int -> Cmd Msg
+get_tickets server_url user_id =
   Http.get
   { url = server_url ++ "/tickets?user_id=" ++ String.fromInt user_id
-  , expect = Http.expectJson GotTicketRequests (Decode.list ticketsDecoder)
+  , expect = Http.expectJson Got_Ticket_Requests (Decode.list tickets_decoder)
   }
 
 -- UPDATE
 
+type Ticket_Field = Ticket_First_Name | Ticket_Last_Name | Ticket_Date_Of_Birth
+
 type Msg
-  = StepClicked Step
-  | Harbour_Selected Harbour
-  | Create_Ticket_Clicked
+  = Step_Clicked Step
   | Step_Panel_Leaved
-  | Category_Clicked Category
-  | Variant_Dropdown_Clicked
-  | Variant_Clicked Variant Ticket_Response
+  -- Harbour
+  | Got_Harbours (Result Http.Error (List Harbour))
+  | Harbour_Selected Harbour
+  -- Ticket
+  | Got_Ticket_Requests (Result Http.Error (List Ticket_Request))
+  | Create_Ticket_Clicked
+  | Create_Ticket_Selected Category
+  | Vehicle_Ticket_Variant_Clicked
+  | Vehicle_Ticket_Variant_Selected Variant Ticket_Response
   | Ticket_Validate Ticket_Field
   | Ticket_Changed Ticket_Field String
-  | GotDepartures (Result Http.Error (List Departure))
-  | GotHarbours (Result Http.Error (List Harbour))
-  | GotTicketRequests (Result Http.Error (List Ticket_Request))
+  -- Departure
+  | Got_Departures (Result Http.Error (List Departure))
+
+temporary_developer_customer_id = 1
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
   case msg of
-    StepClicked step ->
+    Step_Clicked step ->
       case ( step, model.harbour ) of
           ( Departure_Step, Just harbour ) ->
-            ( { model | step = step }, getDepartures model.server_url harbour.id )
+            ( { model | step = step }, get_departures model.flags.server_url harbour.id )
 
           _ -> ( { model | step = step }, Cmd.none )
 
@@ -237,7 +241,7 @@ update msg model =
           , is_vehicle_variant_expanded = False
         }, Cmd.none )
 
-    Category_Clicked category ->
+    Create_Ticket_Selected category ->
       let ticket_id = Dict.size model.ticket_responses
       in
       ( { model
@@ -253,8 +257,9 @@ update msg model =
       , Cmd.none
       )
 
-    Variant_Dropdown_Clicked -> ( { model | is_vehicle_variant_expanded = True }, Cmd.none )
-    Variant_Clicked variant ticket -> ( { model | is_vehicle_variant_expanded = False }, Cmd.none )
+    Vehicle_Ticket_Variant_Clicked -> ( { model | is_vehicle_variant_expanded = True }, Cmd.none )
+    Vehicle_Ticket_Variant_Selected variant ticket ->
+      ( { model | is_vehicle_variant_expanded = False }, Cmd.none )
 
     Ticket_Changed field value ->
       case field of
@@ -263,7 +268,7 @@ update msg model =
           Ticket_Date_Of_Birth -> let _ = Debug.log "Date of birth input" value
                                   in ( model, Cmd.none )
 
-    GotDepartures result ->
+    Got_Departures result ->
       case result of
         Ok departures ->
           let _ = Debug.log "departures" departures
@@ -271,7 +276,7 @@ update msg model =
 
         Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
 
-    GotHarbours result ->
+    Got_Harbours result ->
       case result of
         Ok harbours ->
             case List.head harbours of
@@ -282,40 +287,16 @@ update msg model =
 
         Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
 
-    GotTicketRequests result ->
+    Got_Ticket_Requests result ->
       case result of
         Ok tickets ->
           let _ = Debug.log "tickets" tickets
           in ( { model | ticket_requests = tickets }
-             , getTickets model.server_url temporary_developer_customer_id)
+             , get_tickets model.flags.server_url temporary_developer_customer_id)
 
         Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
 
-subscriptions : Model -> Sub Msg
-subscriptions _ = Sub.none
-
--- VIEW
-
-view_header : Html Msg
-view_header =
-  div [ class "header" ]
-    [ h4 [ class "header-title" ]
-      [ text "Læsøfærgen. "
-      , span [ class "header-subtitle" ] [ text "Nemt til og fra Læsø" ]
-      ]
-    ]
-
-view_step : Step -> Step -> String -> Html Msg
-view_step current_step step label =
-  div
-    [ classList [ ( "step", True ), ( "selected", current_step == step ) ]
-    , onClick (StepClicked step)
-    ]
-    [ text label ]
-
-view_separator : Html Msg
-view_separator =
-  div [ class "step-separator" ] []
+-- VIEW WIDGETS
 
 type alias Radio_Button_Item = { id : Int, name : String }
 
@@ -324,113 +305,27 @@ view_radio_button :
   -> Maybe Radio_Button_Item
   -> Radio_Button_Item
   -> Html msg
-view_radio_button to_Msg current item =
+
+view_radio_button to_msg current item =
   div
     [ classList [ ( "radio-button", True ), ( "selected", current == Just item ) ]
-    , onClick (to_Msg item)
+    , onClick (to_msg item)
     ]
     [ span [ class "radio-button-label" ] [ text item.name ] ]
 
-view_person_ticket_fields : Html Msg
-view_person_ticket_fields =
-  div [ class "ticket-fields" ]
-  [ input
-    [ class "ticket-input"
-    , placeholder "Fornavn"
-    , required True
-    , onBlur (Ticket_Validate Ticket_First_Name)
-    , onInput (Ticket_Changed Ticket_First_Name)
-    ] []
-  , input
-    [ class "ticket-input"
-    , placeholder "Efternavn"
-    , required True
-    , onBlur (Ticket_Validate Ticket_Last_Name)
-    , onInput (Ticket_Changed Ticket_Last_Name)
-    ] []
-  , input
-    [ class "ticket-input"
-    , type_ "date"
-    , required True
-    , onBlur (Ticket_Validate Ticket_Date_Of_Birth)
-    , onInput (Ticket_Changed Ticket_Date_Of_Birth)
-    ] []
-  ]
+-- VIEW
 
-resolve_variant : Ticket_Response -> Variant -> Html Msg
-resolve_variant ticket variant =
-  div [ class "dropdown-option", onClick (Variant_Clicked variant ticket) ]
-    ((case variant of
-      Car ->
-        [ svg
-          [ Svg.Attributes.width "1rem"
-          , Svg.Attributes.height "1rem"
-          ]
-          [ path
-            [ d "M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" ]
-            []
-          ]
-        ]
-
-      Truck ->
-        [ svg
-          [ Svg.Attributes.width "1rem"
-          , Svg.Attributes.height "1rem"
-          ]
-          [ path [ d "M8 7.982C9.664 6.309 13.825 9.236 8 13 2.175 9.236 6.336 6.31 8 7.9822" ] []
-          , path [ d "M3.75 0a1 1 0 0 0-.8.4L.1 4.2a.5.5 0 0 0-.1.3V15a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4.5a.5.5 0 0 0-.1-.3L13.05.4a1 1 0 0 0-.8-.4zm0 1H7.5v3h-6zM8.5 4V1h3.75l2.25 3zM15 5v10H1V5z" ] []
-          ]
-        ]
-
-      Bicycle ->
-        [ svg
-          [ Svg.Attributes.width "1rem"
-          , Svg.Attributes.height "1rem"
-          ]
-          [ path [ d "M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6" ] []
-          , path [ d "M13.997 5.17a5 5 0 0 0-8.101-4.09A5 5 0 0 0 1.28 9.342a5 5 0 0 0 8.336 5.109 3.5 3.5 0 0 0 5.201-4.065 3.001 3.001 0 0 0-.822-5.216zm-1-.034a1 1 0 0 0 .668.977 2.001 2.001 0 0 1 .547 3.478 1 1 0 0 0-.341 1.113 2.5 2.5 0 0 1-3.715 2.905 1 1 0 0 0-1.262.152 4 4 0 0 1-6.67-4.087 1 1 0 0 0-.2-1 4 4 0 0 1 3.693-6.61 1 1 0 0 0 .8-.2 4 4 0 0 1 6.48 3.273z" ] []
-          ]
-        ]
-    ) ++
-      [ span [ class "dropdown-option-text" ] [ text (variant_to_string variant) ] ]
-    )
-
-view_vehicle_ticket_fields : Model -> Ticket_Response -> Html Msg
-view_vehicle_ticket_fields model ticket =
-  div [ class "select-variant" ]
-  [ span
-    [ class "select-variant-text", onClick Variant_Dropdown_Clicked ]
-    [ text "Variant" ]
-  , div
-    [ classList
-      [ ( "dropdown", True )
-      , ( "selected", model.is_vehicle_variant_expanded )
-      ]
-    ]
-    (List.map (resolve_variant ticket) variants)
-  ]
-
-view_ticket : Model -> Ticket_Response -> Html Msg
-view_ticket model ticket =
-  div [ class "ticket" ]
-    [ div [ class "ticket-label" ] [ text (category_to_string ticket.category) ]
-    , div [ class "ticket-divider" ]
-      [ div [ class "ticket-divider-dot" ] []
-      , div [ class "ticket-divider-line" ] []
-      , div [ class "ticket-divider-dot" ] []
-      ]
-    , case ticket.category of
-        Person -> view_person_ticket_fields
-        Pet -> div [] []
-        Breakfast -> div [] []
-        Firstclass -> div [] []
-        Vehicle -> view_vehicle_ticket_fields model ticket
-    , div [ class "ticket-price" ] [ span [ class "ticket-price-text" ] [ text "-- DKK" ] ]
+view_departure : Departure -> Html Msg
+view_departure departure =
+  div []
+    [ p [] [ text ("Afgang: " ++ departure.time) ]
+    , p [] [ text ("Færge: " ++ departure.ferry.name) ]
+    , p [] [ text ("Havn: " ++ departure.harbour.name) ]
     ]
 
 resolve_category : Category -> Html Msg
 resolve_category category =
-  div [ class "dropdown-option", onClick (Category_Clicked category) ]
+  div [ class "dropdown-option", onClick (Create_Ticket_Selected category) ]
     ((case category of
       Person ->
         [ svg
@@ -488,6 +383,103 @@ resolve_category category =
       [ span [ class "dropdown-option-text" ] [ text (category_to_string category) ] ]
     )
 
+resolve_variant : Ticket_Response -> Variant -> Html Msg
+resolve_variant ticket variant =
+  div [ class "dropdown-option", onClick (Vehicle_Ticket_Variant_Selected variant ticket) ]
+    ((case variant of
+      Car ->
+        [ svg
+          [ Svg.Attributes.width "1rem"
+          , Svg.Attributes.height "1rem"
+          ]
+          [ path
+            [ d "M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" ]
+            []
+          ]
+        ]
+
+      Truck ->
+        [ svg
+          [ Svg.Attributes.width "1rem"
+          , Svg.Attributes.height "1rem"
+          ]
+          [ path [ d "M8 7.982C9.664 6.309 13.825 9.236 8 13 2.175 9.236 6.336 6.31 8 7.9822" ] []
+          , path [ d "M3.75 0a1 1 0 0 0-.8.4L.1 4.2a.5.5 0 0 0-.1.3V15a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4.5a.5.5 0 0 0-.1-.3L13.05.4a1 1 0 0 0-.8-.4zm0 1H7.5v3h-6zM8.5 4V1h3.75l2.25 3zM15 5v10H1V5z" ] []
+          ]
+        ]
+
+      Bicycle ->
+        [ svg
+          [ Svg.Attributes.width "1rem"
+          , Svg.Attributes.height "1rem"
+          ]
+          [ path [ d "M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6" ] []
+          , path [ d "M13.997 5.17a5 5 0 0 0-8.101-4.09A5 5 0 0 0 1.28 9.342a5 5 0 0 0 8.336 5.109 3.5 3.5 0 0 0 5.201-4.065 3.001 3.001 0 0 0-.822-5.216zm-1-.034a1 1 0 0 0 .668.977 2.001 2.001 0 0 1 .547 3.478 1 1 0 0 0-.341 1.113 2.5 2.5 0 0 1-3.715 2.905 1 1 0 0 0-1.262.152 4 4 0 0 1-6.67-4.087 1 1 0 0 0-.2-1 4 4 0 0 1 3.693-6.61 1 1 0 0 0 .8-.2 4 4 0 0 1 6.48 3.273z" ] []
+          ]
+        ]
+    ) ++
+      [ span [ class "dropdown-option-text" ] [ text (variant_to_string variant) ] ]
+    )
+
+view_vehicle_ticket_fields : Model -> Ticket_Response -> Html Msg
+view_vehicle_ticket_fields model ticket =
+  div [ class "select-variant" ]
+  [ span
+    [ class "select-variant-text", onClick Vehicle_Ticket_Variant_Clicked ]
+    [ text "Variant" ]
+  , div
+    [ classList
+      [ ( "dropdown", True )
+      , ( "selected", model.is_vehicle_variant_expanded )
+      ]
+    ]
+    (List.map (resolve_variant ticket) variants)
+  ]
+
+view_person_ticket_fields : Html Msg
+view_person_ticket_fields =
+  div [ class "ticket-fields" ]
+  [ input
+    [ class "ticket-input"
+    , placeholder "Fornavn"
+    , required True
+    , onBlur (Ticket_Validate Ticket_First_Name)
+    , onInput (Ticket_Changed Ticket_First_Name)
+    ] []
+  , input
+    [ class "ticket-input"
+    , placeholder "Efternavn"
+    , required True
+    , onBlur (Ticket_Validate Ticket_Last_Name)
+    , onInput (Ticket_Changed Ticket_Last_Name)
+    ] []
+  , input
+    [ class "ticket-input"
+    , type_ "date"
+    , required True
+    , onBlur (Ticket_Validate Ticket_Date_Of_Birth)
+    , onInput (Ticket_Changed Ticket_Date_Of_Birth)
+    ] []
+  ]
+
+view_ticket : Model -> Ticket_Response -> Html Msg
+view_ticket model ticket =
+  div [ class "ticket" ]
+    [ div [ class "ticket-label" ] [ text (category_to_string ticket.category) ]
+    , div [ class "ticket-divider" ]
+      [ div [ class "ticket-divider-dot" ] []
+      , div [ class "ticket-divider-line" ] []
+      , div [ class "ticket-divider-dot" ] []
+      ]
+    , case ticket.category of
+        Person -> view_person_ticket_fields
+        Pet -> div [] []
+        Breakfast -> div [] []
+        Firstclass -> div [] []
+        Vehicle -> view_vehicle_ticket_fields model ticket
+    , div [ class "ticket-price" ] [ span [ class "ticket-price-text" ] [ text "-- DKK" ] ]
+    ]
+
 view_step_panel : Model -> Html Msg
 view_step_panel model =
   case model.step of
@@ -527,13 +519,17 @@ view_step_panel model =
     Confirm_Pay_Step ->
       div [] [ text "Bekræft og betal" ]
 
-view_departure : Departure -> Html Msg
-view_departure departure =
-  div []
-    [ p [] [ text ("Afgang: " ++ departure.time) ]
-    , p [] [ text ("Færge: " ++ departure.ferry.name) ]
-    , p [] [ text ("Havn: " ++ departure.harbour.name) ]
+view_separator : Html Msg
+view_separator =
+  div [ class "step-separator" ] []
+
+view_step : Step -> Step -> String -> Html Msg
+view_step current_step step label =
+  div
+    [ classList [ ( "step", True ), ( "selected", current_step == step ) ]
+    , onClick (Step_Clicked step)
     ]
+    [ text label ]
 
 view_ticket_picker : Model -> Html Msg
 view_ticket_picker model =
@@ -546,7 +542,7 @@ view_ticket_picker model =
       , view_step model.step Departure_Step "Afgang"
       , view_separator
       , div [ class "confirm-wrapper" ]
-        [ div [ class "confirm-button", onClick (StepClicked Confirm_Pay_Step) ]
+        [ div [ class "confirm-button", onClick (Step_Clicked Confirm_Pay_Step) ]
           [ text "Bekræft og betal"
           , div [ class "confirm-icon" ]
             [ svg
@@ -562,6 +558,15 @@ view_ticket_picker model =
         ]
       ]
     , div [ class "step-panel", onMouseLeave Step_Panel_Leaved ] [ view_step_panel model ]
+    ]
+
+view_header : Html Msg
+view_header =
+  div [ class "header" ]
+    [ h4 [ class "header-title" ]
+      [ text "Læsøfærgen. "
+      , span [ class "header-subtitle" ] [ text "Nemt til og fra Læsø" ]
+      ]
     ]
 
 view : Model -> Html Msg

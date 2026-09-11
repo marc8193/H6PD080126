@@ -16,7 +16,6 @@ rectangle Personbillet
 rectangle Kæledyrsbillet
 rectangle Morgenmadsbillet
 rectangle Førsteklassebillet
-rectangle Køretøjsbillet
 rectangle Cykelbillet
 rectangle Bilbillet
 rectangle Lastbilbillet
@@ -34,21 +33,20 @@ Afgang "1" -- "1..*" Billet
 
 Kunde "1" -- "1..*" Billet
 
-Personbillet -up-|> Billet
 Kæledyrsbillet -up-|> Billet
 Morgenmadsbillet -up-|> Billet
 Førsteklassebillet -up-|> Billet
-Køretøjsbillet -up-|> Billet
 
+Personbillet -up-|> Billet
 Personbillet "1" -- "1" Person
 
-Cykelbillet -up-|> Køretøjsbillet
+Cykelbillet -up-|> Billet
 Cykelbillet "1" -- "1" Cykel
 
-Bilbillet -up-|> Køretøjsbillet
+Bilbillet -up-|> Billet
 Bilbillet "1" -- "1" Bil
 
-Lastbilbillet -up-|> Køretøjsbillet
+Lastbilbillet -up-|> Billet
 Lastbilbillet "1" -- "1" Lastbil
 
 @enduml
