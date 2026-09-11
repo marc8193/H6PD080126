@@ -52,3 +52,8 @@ overskuelig.
 Casebeskrivelsen og problemformuleringen blev omskrevet på baggrund af feedback fra vejleder, så
 det fremgår tydeligt, at systemet omhandler færgebilletter. Ydermere blev billetvælgeren
 udarbejdet, så kunden kan vælge og oprette de ønskede billetter.
+
+## Dag 11 – 11/09-2026
+
+Klientkoden blev finpudset og struktureret yderligere. Der blev desuden arbejdet videre med
+billetvælgeren, herunder håndtering af dropdown-menuer og valg af billet- og køretøjsvarianter.

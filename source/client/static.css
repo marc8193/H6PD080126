@@ -1,5 +1,3 @@
-/* Main layout */
-
 .app {
   width: 100%;
   height: 100vh;
@@ -21,9 +19,6 @@
   overflow-y: auto;
 }
 
-
-/* Header */
-
 .header {
   display: flex;
   align-items: center;
@@ -44,9 +39,6 @@
   font-size: var(--h6);
   color: var(--accent);
 }
-
-
-/* Ticket picker */
 
 .ticket-picker {
   display: flex;
@@ -128,45 +120,11 @@
   box-sizing: border-box;
 }
 
-
-/* Harbour selector */
-
 .harbour-list {
   display: flex;
   flex-direction: row;
   gap: 1rem;
 }
-
-.radio-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 3rem;
-  box-sizing: border-box;
-  background-color: var(--secondary);
-  color: var(--text);
-  border-radius: 1rem;
-  border: 0.1rem dashed transparent;
-  cursor: pointer;
-}
-
-.radio-button.selected {
-  background-color: var(--primary);
-  color: var(--secondary);
-}
-
-.radio-button:hover {
-  color: var(--text);
-  background-color: var(--accent);
-  border-color: var(--primary);
-}
-
-.radio-button-label {
-  transform: translateY(0.2rem);
-}
-
-/* Ticket step */
 
 .ticket-list {
   display: flex;
@@ -268,10 +226,75 @@
   border: 0.1rem dashed var(--primary);
 }
 
-.create-ticket-text {
+.select-variant {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  width: 100%;
+  background-color: var(--background);
+  color: #888;
+  box-sizing: border-box;
+  border-radius: 1rem;
+  border: 0.1rem dashed transparent;
+  cursor: pointer;
+}
+
+.select-variant:hover {
+  background-color: var(--accent);
+  border: 0.1rem dashed var(--primary);
+}
+
+.select-variant-text {
   width: 100%;
   height: 100%;
   text-align: center;
+  transform: translateY(0.3rem);
+}
+
+.radio-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 3rem;
+  box-sizing: border-box;
+  background-color: var(--secondary);
+  color: var(--text);
+  border-radius: 1rem;
+  border: 0.1rem dashed transparent;
+  cursor: pointer;
+}
+
+.radio-button.selected {
+  background-color: var(--primary);
+  color: var(--secondary);
+}
+
+.radio-button:hover {
+  color: var(--text);
+  background-color: var(--accent);
+  border-color: var(--primary);
+}
+
+.radio-button-label {
+  transform: translateY(0.2rem);
+}
+
+.dropdown-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.dropdown-text {
+  width: 100%;
+  height: 100%;
   transform: translateY(0.3rem);
 }
 
@@ -320,33 +343,6 @@
 
 .dropdown-option-text {
   transform: translateY(0.1rem);
-}
-
-.select-variant {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 2rem;
-  width: 100%;
-  background-color: var(--background);
-  color: #888;
-  box-sizing: border-box;
-  border-radius: 1rem;
-  border: 0.1rem dashed transparent;
-  cursor: pointer;
-}
-
-.select-variant:hover {
-  background-color: var(--accent);
-  border: 0.1rem dashed var(--primary);
-}
-
-.select-variant-text {
-  width: 100%;
-  height: 100%;
-  text-align: center;
-  transform: translateY(0.3rem);
 }
 
 @font-face {
