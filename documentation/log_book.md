@@ -57,3 +57,9 @@ udarbejdet, så kunden kan vælge og oprette de ønskede billetter.
 
 Klientkoden blev finpudset og struktureret yderligere. Der blev desuden arbejdet videre med
 billetvælgeren, herunder håndtering af dropdown-menuer og valg af billet- og køretøjsvarianter.
+
+## Dag 12 – 14/09-2026
+
+Datahåndteringen i billetvælgeren blev videreudviklet og finpudset. Billetterne blev omstruktureret,
+så den samme datastruktur benyttes ved både hentning og oprettelse af billetter.
+Derudover blev indlæsningen af data fra API'et udvidet og tilpasset den nye datastruktur.
