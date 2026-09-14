@@ -3,8 +3,8 @@ module Main exposing (..)
 import Browser
 import Dict exposing (Dict)
 import Html exposing (Html, div, h4, p, span, text, input)
-import Html.Attributes exposing (class, classList, placeholder, required, type_)
-import Html.Events exposing (onBlur, onClick, onInput, onMouseLeave)
+import Html.Attributes exposing (class, classList, placeholder, required, value, type_)
+import Html.Events exposing (onClick, onInput, onMouseLeave)
 import Http
 import Json.Decode as Decode
 import Svg exposing (path, svg)
@@ -55,7 +55,7 @@ type alias Departure =
   , canceled : Int
   }
 
-type alias Ticket_Request =
+type alias Ticket =
   { id : Int
   , departure : Departure
   , user : User
@@ -66,7 +66,10 @@ type alias Ticket_Request =
   , identification : Maybe String
   }
 
-type alias Person_Data = { name : String, birthday : String }
+type alias Person_Data =
+  { firstname : String
+  , lastname : String
+  , birthday : String }
 
 type Variant = Car | Truck | Bicycle
 
@@ -74,25 +77,26 @@ type alias Vehicle_Data = { variant : Variant, identification : String }
 
 type Category = Person | Pet | Breakfast | Firstclass | Vehicle
 
-type alias Ticket_Response =
-  { departure_id : Int
-  , user_id : Int
-  , category : Category
+type alias Booking_Ticket =
+  { category : Category
   , person : Maybe Person_Data
   , vehicle : Maybe Vehicle_Data
+  }
+
+type alias Trip =
+  { user_id : Int
+  , harbour : Maybe Harbour
+  , tickets : Dict Int Booking_Ticket
+  , departure_id : Int
   }
 
 type alias Model =
   { flags : Flags
   , step : Step
   , dropdown : Maybe Dropdown
-  -- Harbour
+  , trip : Trip
   , harbours : List Harbour
-  , harbour : Maybe Harbour
-  -- Ticket
-  , ticket_requests : List Ticket_Request
-  , ticket_responses : Dict Int Ticket_Response
-  -- Depature
+  , tickets : List Ticket
   , departures : List Departure
   }
 
@@ -101,10 +105,9 @@ init flags =
   ( { flags = { server_url = flags.server_url }
     , step = Ticket_Step
     , dropdown = Nothing
+    , trip = { user_id = -1, harbour = Nothing, tickets = Dict.empty, departure_id = -1 }
     , harbours = []
-    , harbour = Nothing
-    , ticket_requests = []
-    , ticket_responses = Dict.empty
+    , tickets = []
     , departures = []
     }
   , get_harbours flags.server_url
@@ -162,9 +165,9 @@ departures_decoder =
     (Decode.field "time" Decode.string)
     (Decode.field "canceled" Decode.int)
 
-tickets_decoder : Decode.Decoder Ticket_Request
+tickets_decoder : Decode.Decoder Ticket
 tickets_decoder =
-  Decode.map8 Ticket_Request
+  Decode.map8 Ticket
     (Decode.field "id" Decode.int)
     (Decode.field "departure" departures_decoder)
     (Decode.field "user" users_decoder)
@@ -192,12 +195,16 @@ get_tickets : String -> Int -> Cmd Msg
 get_tickets server_url user_id =
   Http.get
   { url = server_url ++ "/tickets?user_id=" ++ String.fromInt user_id
-  , expect = Http.expectJson Got_Ticket_Requests (Decode.list tickets_decoder)
+  , expect = Http.expectJson Got_Ticket (Decode.list tickets_decoder)
   }
 
 -- UPDATE
 
-type Ticket_Field = Ticket_First_Name | Ticket_Last_Name | Ticket_Date_Of_Birth
+type Ticket_Field
+  = Ticket_Person_Firstname
+  | Ticket_Person_Lastname
+  | Ticket_Person_Date_Of_Birth
+  | Ticket_Vehicle_Identification
 
 type Msg
   = Step_Clicked Step
@@ -207,11 +214,10 @@ type Msg
   | Got_Harbours (Result Http.Error (List Harbour))
   | Harbour_Selected Harbour
   -- Ticket
-  | Got_Ticket_Requests (Result Http.Error (List Ticket_Request))
+  | Got_Ticket (Result Http.Error (List Ticket))
   | Create_Ticket_Selected Category
   | Vehicle_Ticket_Variant_Selected Int Variant
-  | Ticket_Validate Ticket_Field
-  | Ticket_Changed Ticket_Field String
+  | Ticket_Changed Int Ticket_Field String
   -- Departure
   | Got_Departures (Result Http.Error (List Departure))
 
@@ -221,19 +227,19 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
   case msg of
     Step_Clicked step ->
-      case ( step, model.harbour ) of
+      case ( step, model.trip.harbour ) of
           ( Departure_Step, Just harbour ) ->
-            ( { model | step = step }, get_departures model.flags.server_url harbour.id )
+            let
+              _ = Debug.log "Trip" model.trip
+            in
+              ( { model | step = step }, get_departures model.flags.server_url harbour.id )
 
           _ -> ( { model | step = step }, Cmd.none )
 
-    Step_Panel_Leaved ->
-      ( { model
-          | dropdown = Nothing
-        }, Cmd.none )
+    Step_Panel_Leaved -> ( { model | dropdown = Nothing }, Cmd.none )
 
     Dropdown_Clicked dropdown ->
-      ( { model | dropdown = if model.dropdown == Just dropdown then  Nothing else Just dropdown }
+      ( { model | dropdown = if model.dropdown == Just dropdown then Nothing else Just dropdown }
       , Cmd.none
       )
 
@@ -242,75 +248,127 @@ update msg model =
         Ok harbours ->
             case List.head harbours of
                 Just harbour ->
-                    ( { model | harbours = harbours, harbour = Just harbour }, Cmd.none )
+                    ( { model | harbours = harbours }, Cmd.none )
 
                 Nothing -> ( model, Cmd.none )
 
         Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
 
-    Harbour_Selected harbour -> ( { model | harbour = Just harbour }, Cmd.none )
+    Harbour_Selected harbour ->
+      let trip = model.trip in ( { model | trip = { trip | harbour = Just harbour } } , Cmd.none )
 
-    Got_Ticket_Requests result ->
+    Got_Ticket result ->
       case result of
         Ok tickets ->
           let _ = Debug.log "tickets" tickets
-          in ( { model | ticket_requests = tickets }
+          in ( { model | tickets = tickets }
              , get_tickets model.flags.server_url temporary_developer_customer_id)
 
         Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
 
     Create_Ticket_Selected category ->
-      let ticket_id = Dict.size model.ticket_responses
+      let
+        trip  = model.trip
+        ticket_id = Dict.size trip.tickets
+        tickets =
+          Dict.insert
+            ticket_id
+            { category = category, person = Nothing, vehicle = Nothing }
+            trip.tickets
       in
-      ( { model
-          | dropdown = Nothing
-          , ticket_responses =
-              Dict.insert
-                ticket_id
-                { departure_id = -1
-                , user_id = -1
-                , category = category
-                , person = Nothing
-                , vehicle = Nothing
-                }
-                model.ticket_responses
-        }
-      , Cmd.none
-      )
+        ( { model | dropdown = Nothing, trip = { trip | tickets = tickets } }, Cmd.none )
 
     Vehicle_Ticket_Variant_Selected ticket_id variant ->
-      ( { model
-          | dropdown = Nothing
-          , ticket_responses =
-              Dict.update ticket_id
+      let
+        trip = model.trip
+        tickets =
+          Dict.update
+            ticket_id
+            (Maybe.map
+              (\ticket -> {
+                ticket | vehicle = case ticket.vehicle of
+                  Just vehicle -> Just { vehicle | variant = variant }
+                  Nothing -> Just { variant = variant, identification = "" }
+                }
+              )
+            )
+            trip.tickets
+      in
+        ( { model | dropdown = Nothing, trip = { trip | tickets = tickets } }, Cmd.none )
+
+    Ticket_Changed ticket_id field value ->
+      case field of
+        Ticket_Person_Firstname ->
+          let
+            trip = model.trip
+            tickets =
+              Dict.update
+                ticket_id
                 (Maybe.map
-                  (\ticket ->
-                    { ticket
-                      | vehicle =
-                          case ticket.vehicle of
-                            Just vehicle -> Just { vehicle | variant = variant }
-                            Nothing -> Just { variant = variant, identification = "" }
+                  (\ticket -> {
+                    ticket | person = case ticket.person of
+                      Just person -> Just { person | firstname = value }
+                      Nothing -> Just { firstname = value, lastname = "", birthday = "" }
                     }
                   )
                 )
-                model.ticket_responses
-        }
-      , Cmd.none
-      )
+                trip.tickets
+          in
+            ( { model | dropdown = Nothing, trip = { trip | tickets = tickets } }, Cmd.none )
 
-    Ticket_Validate field ->
-        case field of
-          Ticket_First_Name -> let _ = Debug.log "Validate first name" () in ( model, Cmd.none )
-          Ticket_Last_Name -> let _ = Debug.log "Validate last name" () in ( model, Cmd.none )
-          Ticket_Date_Of_Birth -> let _ = Debug.log "Validate date of birth" ()
-                                  in ( model, Cmd.none )
+        Ticket_Person_Lastname ->
+          let
+            trip = model.trip
+            tickets =
+              Dict.update
+                ticket_id
+                (Maybe.map
+                  (\ticket -> {
+                    ticket | person = case ticket.person of
+                      Just person -> Just { person | lastname = value }
+                      Nothing -> Just { firstname = "", lastname = value, birthday = "" }
+                    }
+                  )
+                )
+                trip.tickets
+          in
+            ( { model | dropdown = Nothing, trip = { trip | tickets = tickets } }, Cmd.none )
 
-    Ticket_Changed field value ->
-      case field of
-          Ticket_First_Name -> let _ = Debug.log "First name input" value in ( model, Cmd.none )
-          Ticket_Last_Name -> let _ = Debug.log "Last name input" value in ( model, Cmd.none )
-          Ticket_Date_Of_Birth -> let _ = Debug.log "Date of birth input" value
-                                  in ( model, Cmd.none )
+        Ticket_Person_Date_Of_Birth ->
+          let
+            trip = model.trip
+            tickets =
+              Dict.update
+                ticket_id
+                (Maybe.map
+                  (\ticket -> {
+                    ticket | person = case ticket.person of
+                      Just person -> Just { person | birthday = value }
+                      Nothing -> Just { firstname = "", lastname = "", birthday = value }
+                    }
+                  )
+                )
+                trip.tickets
+          in
+            ( { model | dropdown = Nothing, trip = { trip | tickets = tickets } }, Cmd.none )
+
+        Ticket_Vehicle_Identification ->
+          let
+            trip = model.trip
+            tickets =
+              Dict.update
+                ticket_id
+                (Maybe.map
+                  (\ticket -> {
+                    ticket | vehicle = case ticket.vehicle of
+                      Just vehicle -> Just { vehicle | identification = value }
+                      Nothing -> Nothing
+                    }
+                  )
+                )
+                trip.tickets
+          in
+            ( { model | dropdown = Nothing, trip = { trip | tickets = tickets } }, Cmd.none )
 
     Got_Departures result ->
       case result of
@@ -379,29 +437,29 @@ view_step current_step step label =
 view_separator : Html Msg
 view_separator = div [ class "step-separator" ] []
 
-view_person_ticket_fields : Html Msg
-view_person_ticket_fields =
+view_person_ticket_fields : Int -> Booking_Ticket -> Html Msg
+view_person_ticket_fields ticket_id ticket =
   div [ class "ticket-fields" ]
   [ input
     [ class "ticket-input"
     , placeholder "Fornavn"
     , required True
-    , onBlur (Ticket_Validate Ticket_First_Name)
-    , onInput (Ticket_Changed Ticket_First_Name)
+    , value (Maybe.withDefault "" (Maybe.map .firstname ticket.person))
+    , onInput (Ticket_Changed ticket_id Ticket_Person_Firstname)
     ] []
   , input
     [ class "ticket-input"
     , placeholder "Efternavn"
+    , value (Maybe.withDefault "" (Maybe.map .lastname ticket.person))
     , required True
-    , onBlur (Ticket_Validate Ticket_Last_Name)
-    , onInput (Ticket_Changed Ticket_Last_Name)
+    , onInput (Ticket_Changed ticket_id Ticket_Person_Lastname)
     ] []
   , input
     [ class "ticket-input"
     , type_ "date"
+    , value (Maybe.withDefault "" (Maybe.map .birthday ticket.person))
     , required True
-    , onBlur (Ticket_Validate Ticket_Date_Of_Birth)
-    , onInput (Ticket_Changed Ticket_Date_Of_Birth)
+    , onInput (Ticket_Changed ticket_id Ticket_Person_Date_Of_Birth)
     ] []
   ]
 
@@ -431,7 +489,7 @@ resolve_variant ticket_id variant =
     [ span [ class "dropdown-option-text" ] [ text (variant_to_string variant) ] ]
   )
 
-view_vehicle_ticket_fields : Model -> Int -> Ticket_Response -> Html Msg
+view_vehicle_ticket_fields : Model -> Int -> Booking_Ticket -> Html Msg
 view_vehicle_ticket_fields model ticket_id ticket =
   div [ class "ticket-fields"]
   [ div [ class "select-variant" ]
@@ -453,14 +511,14 @@ view_vehicle_ticket_fields model ticket_id ticket =
             case vehicle.variant of
               Car -> "Nummerplade"
               Truck -> "Nummerplade"
-              Bicycle -> "Identifikationsnummer"
+              Bicycle -> "Stelnummer"
         in
         input
           [ class "ticket-input"
           , placeholder input_placeholder
+          , value (Maybe.withDefault "" (Maybe.map .identification ticket.vehicle))
           , required True
-          , onBlur (Ticket_Validate Ticket_First_Name)
-          , onInput (Ticket_Changed Ticket_First_Name)
+          , onInput (Ticket_Changed ticket_id Ticket_Vehicle_Identification)
           ]
           []
 
@@ -468,7 +526,7 @@ view_vehicle_ticket_fields model ticket_id ticket =
         text ""
   ]
 
-view_ticket : Model -> Int -> Ticket_Response -> Html Msg
+view_ticket : Model -> Int -> Booking_Ticket -> Html Msg
 view_ticket model ticket_id ticket =
   div [ class "ticket" ]
   [ div [ class "ticket-label" ] [ text (category_to_string ticket.category) ]
@@ -478,7 +536,7 @@ view_ticket model ticket_id ticket =
     , div [ class "ticket-divider-dot" ] []
     ]
   , case ticket.category of
-      Person -> view_person_ticket_fields
+      Person -> view_person_ticket_fields ticket_id ticket
       Pet -> div [] []
       Breakfast -> div [] []
       Firstclass -> div [] []
@@ -531,14 +589,14 @@ view_step_panel model =
     Departure_From_Step ->
       div [ class "harbour-list" ]
       (List.map
-        (\harbour -> view_radio_button Harbour_Selected model.harbour harbour) model.harbours
+        (\harbour -> view_radio_button Harbour_Selected model.trip.harbour harbour) model.harbours
       )
 
     Ticket_Step ->
       div [ class "ticket-list" ]
       (Dict.foldr (\ticket_id ticket views -> view_ticket model ticket_id ticket :: views)
       []
-      model.ticket_responses
+      model.trip.tickets
         ++
         [ div [ class "create-ticket" ]
           [ view_dropdown
