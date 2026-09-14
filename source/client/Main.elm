@@ -313,17 +313,14 @@ update msg model =
     Step_Clicked step ->
       case step of
           Departure_Step ->
-            let
-              _ = Debug.log "Tickets" model.tickets
+            case model.tickets |> Dict.values |> List.head of
+              Just ticket ->
+                let _ = Debug.log "Tickets" model.tickets
+                in
+                  ( { model | step = step }
+                  , get_departures model.flags.server_url (Just ticket.departure.harbour.id) )
 
-              harbour = model.tickets
-                          |> Dict.values
-                          |> List.head
-                          |> Maybe.map .departure
-                          |> Maybe.map .harbour
-            in
-              ( { model | step = step }
-              , get_departures model.flags.server_url (Maybe.map .id harbour) )
+              Nothing -> ( { model | step = step }, Cmd.none )
 
           _ -> ( { model | step = step }, Cmd.none )
 
@@ -337,10 +334,7 @@ update msg model =
     Got_Users result ->
       case result of
         Ok user ->
-          let
-            _ = Debug.log "User" user
-            tickets = Dict.map (\_ ticket -> { ticket | user = user }) model.tickets
-
+          let tickets = Dict.map (\_ ticket -> { ticket | user = user }) model.tickets
           in ( { model | user = user, tickets = tickets }, Cmd.none )
 
         Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )

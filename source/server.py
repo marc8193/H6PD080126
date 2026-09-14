@@ -528,6 +528,7 @@ def get_departures():
       departure = {
         "id": row["id"],
         "time": row["time"],
+        "week": datetime.fromisoformat(row["time"]).isocalendar().week,
         "canceled": bool(row["canceled"]),
         "user": {
           "id": row["user_id"],
@@ -546,6 +547,21 @@ def get_departures():
       }
 
       departures.append(departure)
+
+    for departure in departures:
+      query = """
+        SELECT
+          capacities.category,
+          capacities.maximum
+        FROM capacities
+        WHERE capacities.ferry_id = ?
+        LIMIT ?
+      """
+
+      query_result = connection.execute(query, (departure["ferry"]["id"], limit))
+
+      for row in query_result.fetchall():
+        departure["ferry"].setdefault("capacities", []).append(dict(row))
 
     result = jsonify(departures), 200
 
