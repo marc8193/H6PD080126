@@ -171,7 +171,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [person, pet, breakfast, first_class, vehicle]
+            enum: [person, pet, breakfast, firstclass, vehicle]
           description: Kategorien for kapacitetsbegrænsningen.
         - name: maximum
           in: query
@@ -199,7 +199,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: [person, pet, breakfast, first_class, vehicle]
+            enum: [person, pet, breakfast, firstclass, vehicle]
           description: Kategorien for kapacitetsbegrænsningen.
         - name: maximum
           in: query
@@ -279,6 +279,8 @@ paths:
         - name: harbour_id
           in: query
           required: true
+          schema:
+            type: integer
         - name: limit
           in: query
           required: false
@@ -408,15 +410,22 @@ paths:
           required: true
           schema:
             type: string
-            enum: [person, pet, breakfast, first_class, vehicle]
+            enum: [person, pet, breakfast, firstclass, vehicle]
           description: Billetkategori.
-        - name: name
+        - name: firstname
           in: query
           required: false
           schema:
             type: string
             format: string
-          description: Personens navn. Anvendes ved kategorien person.
+          description: Personens fornavn. Anvendes ved kategorien person.
+        - name: lastname
+          in: query
+          required: false
+          schema:
+            type: string
+            format: string
+          description: Personens efternavn. Anvendes ved kategorien person.
         - name: birthday
           in: query
           required: false
@@ -440,40 +449,5 @@ paths:
       responses:
         "201":
           description: Billetten blev oprettet.
-        "400":
-          description: Ugyldige data.
-
-    patch:
-      summary: Opdater en eksisterende billet
-      parameters:
-        - name: id
-          in: query
-          required: true
-          schema:
-            type: integer
-          description: Unikt ID på billetten.
-        - name: birthday
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date
-          description: Personens fødselsdato. Anvendes ved kategorien person.
-        - name: variant
-          in: query
-          required: false
-          schema:
-            type: string
-            enum: [car, truck, bicycle]
-          description: Køretøjets variant. Anvendes ved kategorien vehicle.
-        - name: identification
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Køretøjets identifikationsnummer. Anvendes ved kategorien vehicle.
-      responses:
-        "200":
-          description: Billetten blev opdateret.
         "400":
           description: Ugyldige data.

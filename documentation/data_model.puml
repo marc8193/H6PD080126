@@ -83,7 +83,8 @@ class Person
 {
   id: Integer
   billet_id: FK
-  navn: String
+  fornavn: String
+  efternavn: String
   fødselsdato: Date
 }
 
