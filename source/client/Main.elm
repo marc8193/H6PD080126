@@ -1,14 +1,19 @@
 module Main exposing (..)
 
 import Browser
+import Date
 import Dict exposing (Dict)
 import Html exposing (Html, div, h4, p, span, text, input)
-import Html.Attributes exposing (class, classList, placeholder, required, value, type_)
+import Html.Attributes exposing (class, classList, style, placeholder, required, value, type_)
 import Html.Events exposing (onClick, onInput, onMouseLeave)
 import Http
 import Json.Decode as Decode
 import Svg exposing (path, svg)
 import Svg.Attributes exposing (d, fill, viewBox)
+import Task
+import Time
+import Time.Extra as TimeExtra
+import TimeZone
 
 -- MAIN
 
@@ -25,7 +30,12 @@ type alias Flags =
   { server_url : String
   }
 
-type Step = Departure_From_Step | Ticket_Step | Departure_Step | Confirm_Pay_Step
+type Step
+  = Departure_From_Step
+  | Ticket_Step
+  | Departure_Step
+  | Departure_Day_Step (List Departure)
+  | Confirm_Pay_Step
 
 type Dropdown = Create_Ticket_Dropdown | Vehicle_Variant_Dropdown Int
 
@@ -34,9 +44,16 @@ type alias Harbour =
   , name : String
   }
 
+type alias Capacity =
+  { id : Int
+  , maximum : Int
+  , category : String
+  }
+
 type alias Ferry =
   { id : Int
   , name : String
+  , capacities : List Capacity
   }
 
 type alias User =
@@ -51,7 +68,8 @@ type alias Departure =
   , ferry : Ferry
   , harbour : Harbour
   , user : User
-  , time : String
+  , zone : Time.Zone
+  , start : Time.Posix
   , canceled : Bool
   }
 
@@ -83,6 +101,8 @@ type alias Ticket =
 
 type alias Model =
   { flags : Flags
+  , today : Time.Posix
+  , system_zone : Time.Zone
   , step : Step
   , dropdown : Maybe Dropdown
   , user : User
@@ -104,10 +124,11 @@ nil_ticket =
   { id = -1
   , departure =
       { id = -1
-      , ferry = { id = -1, name = "" }
+      , ferry = { id = -1, name = "", capacities = [] }
       , harbour = { id = -1, name = "" }
       , user = nil_user
-      , time = ""
+      , zone = Time.utc
+      , start = Time.millisToPosix 0
       , canceled = False
       }
 
@@ -118,6 +139,8 @@ nil_ticket =
 init : Flags -> ( Model, Cmd Msg )
 init flags =
   ( { flags = { server_url = flags.server_url }
+    , today = Time.millisToPosix 0
+    , system_zone = TimeZone.europe__berlin ()
     , step = Departure_From_Step
     , dropdown = Nothing
     , user = nil_user
@@ -126,8 +149,9 @@ init flags =
     , departures = []
     }
   , Cmd.batch
-    [ get_harbours flags.server_url
-    , get_users flags.server_url 3
+    [ Task.perform Got_Time Time.now
+    , get_harbours flags.server_url
+    , get_users flags.server_url 2
     ]
   )
 
@@ -160,34 +184,59 @@ variant_to_string variant =
 
 -- API
 
+ferries_capacities_decoder : Decode.Decoder Capacity
+ferries_capacities_decoder =
+  Decode.map3
+    Capacity
+    (Decode.field "id" Decode.int)
+    (Decode.field "maximum" Decode.int)
+    (Decode.field "category" Decode.string)
+
+
 ferries_decoder : Decode.Decoder Ferry
 ferries_decoder =
-  Decode.map2 Ferry
+  Decode.map3
+    Ferry
     (Decode.field "id" Decode.int)
     (Decode.field "name" Decode.string)
+    (Decode.field "capacities" (Decode.list ferries_capacities_decoder))
 
 harbours_decoder : Decode.Decoder Harbour
 harbours_decoder =
-  Decode.map2 Harbour
+  Decode.map2
+    Harbour
     (Decode.field "id" Decode.int)
     (Decode.field "name" Decode.string)
 
 users_decoder : Decode.Decoder User
 users_decoder =
-  Decode.map4 User
+  Decode.map4
+    User
     (Decode.field "id" Decode.int)
     (Decode.field "name" Decode.string)
     (Decode.field "email" Decode.string)
     (Decode.field "role" Decode.string)
 
+zone_decoder : Decode.Decoder Time.Zone
+zone_decoder =
+  Decode.string
+    |> Decode.andThen
+      (\name ->
+        case Dict.get name TimeZone.zones of
+          Just zone -> Decode.succeed (zone ())
+          Nothing -> Decode.fail ("Unknown time zone: " ++ name)
+      )
+
 departures_decoder : Decode.Decoder Departure
 departures_decoder =
-  Decode.map6 Departure
+  Decode.map7
+    Departure
     (Decode.field "id" Decode.int)
     (Decode.field "ferry" ferries_decoder)
     (Decode.field "harbour" harbours_decoder)
     (Decode.field "user" users_decoder)
-    (Decode.field "time" Decode.string)
+    (Decode.field "zone" zone_decoder)
+    (Decode.field "start" (Decode.map Time.millisToPosix Decode.int))
     (Decode.field "canceled" Decode.bool)
 
 variant_decoder : Decode.Decoder Variant
@@ -295,6 +344,7 @@ type Msg
   = Step_Clicked Step
   | Step_Panel_Leaved
   | Dropdown_Clicked Dropdown
+  | Got_Time Time.Posix
   | Got_Users (Result Http.Error User)
   -- Harbour
   | Got_Harbours (Result Http.Error (List Harbour))
@@ -306,6 +356,7 @@ type Msg
   | Ticket_Changed Int Ticket_Field String
   -- Departure
   | Got_Departures (Result Http.Error (List Departure))
+  | Departure_Clicked (List Departure)
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -315,12 +366,16 @@ update msg model =
           Departure_Step ->
             case model.tickets |> Dict.values |> List.head of
               Just ticket ->
-                let _ = Debug.log "Tickets" model.tickets
+                let
+                  _ = Debug.log "Departures" model.departures
                 in
                   ( { model | step = step }
                   , get_departures model.flags.server_url (Just ticket.departure.harbour.id) )
 
               Nothing -> ( { model | step = step }, Cmd.none )
+
+          Ticket_Step ->
+            let _ = Debug.log "Tickets" model.tickets in ( { model | step = step }, Cmd.none )
 
           _ -> ( { model | step = step }, Cmd.none )
 
@@ -331,13 +386,15 @@ update msg model =
       , Cmd.none
       )
 
+    Got_Time time -> ( { model | today = time }, Cmd.none )
+
     Got_Users result ->
       case result of
         Ok user ->
           let tickets = Dict.map (\_ ticket -> { ticket | user = user }) model.tickets
           in ( { model | user = user, tickets = tickets }, Cmd.none )
 
-        Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
+        Err error -> let _ = Debug.log "Users - HTTP error" error in ( model, Cmd.none )
 
     Got_Harbours result ->
       case result of
@@ -348,7 +405,7 @@ update msg model =
 
                 Nothing -> ( model, Cmd.none )
 
-        Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
+        Err error -> let _ = Debug.log "Harbours - HTTP error" error in ( model, Cmd.none )
 
     Harbour_Selected harbour ->
       ( { model
@@ -358,6 +415,8 @@ update msg model =
                 let departure = ticket.departure
                 in { ticket | departure = { departure | harbour = harbour } }
               ) model.tickets
+
+          , step = Ticket_Step
         }
       , Cmd.none
       )
@@ -419,8 +478,7 @@ update msg model =
                         ( Ticket_Vehicle_Identification, Vehicle vehicle ) ->
                           Vehicle { vehicle | identification = value }
 
-                        _ ->
-                          ticket.category
+                        _ -> ticket.category
                 }
               )
             )
@@ -430,11 +488,11 @@ update msg model =
 
     Got_Departures result ->
       case result of
-        Ok departures ->
-          let _ = Debug.log "departures" departures
-          in ( { model | departures = departures }, Cmd.none )
+        Ok departures -> ( { model | departures = departures }, Cmd.none )
+        Err error -> let _ = Debug.log "Departures - HTTP error" error in ( model, Cmd.none )
 
-        Err error -> let _ = Debug.log "HTTP error" error in ( model, Cmd.none )
+    Departure_Clicked selected_departures ->
+      ( { model | step = Departure_Day_Step selected_departures }, Cmd.none )
 
 -- VIEW WIDGETS
 
@@ -465,14 +523,6 @@ view_dropdown msg dropdown label selected view_option options =
   ]
 
 -- VIEW
-
-view_departure : Departure -> Html Msg
-view_departure departure =
-  div []
-  [ p [] [ text ("Afgang: " ++ departure.time) ]
-  , p [] [ text ("Færge: " ++ departure.ferry.name) ]
-  , p [] [ text ("Havn: " ++ departure.harbour.name) ]
-  ]
 
 view_header : Html Msg
 view_header =
@@ -639,6 +689,112 @@ resolve_category category =
     [ span [ class "dropdown-option-text" ] [ text (category_to_string category) ] ]
   )
 
+weekday_to_number : Time.Weekday -> Int
+weekday_to_number weekday =
+  case weekday of
+    Time.Mon -> 0
+    Time.Tue -> 1
+    Time.Wed -> 2
+    Time.Thu -> 3
+    Time.Fri -> 4
+    Time.Sat -> 5
+    Time.Sun -> 6
+
+week_start : Time.Zone -> Time.Posix -> Time.Posix
+week_start zone start =
+  TimeExtra.add TimeExtra.Day (-(weekday_to_number (Time.toWeekday zone start))) zone start
+
+week_row : Time.Zone -> Time.Posix -> Time.Posix -> Int
+week_row zone today departure =
+  let
+    current_week = week_start zone today
+    departure_week = week_start zone departure
+  in
+  TimeExtra.diff TimeExtra.Week zone current_week departure_week + 1
+
+lastest_week_row : Time.Zone -> Time.Posix -> List Departure -> Int
+lastest_week_row zone today departures =
+  departures
+    |> List.map (\departure -> week_row zone today departure.start)
+    |> List.maximum
+    |> Maybe.withDefault 1
+
+view_week_number : Time.Zone -> Time.Posix -> Int -> Html Msg
+view_week_number zone today row =
+  let
+    date = TimeExtra.add TimeExtra.Week (row - 1) zone today
+    week = Date.fromPosix zone date |> Date.weekNumber
+  in
+  div
+    [ class "week-number-departure-item"
+    , style "grid-column" "1"
+    , style "grid-row" (String.fromInt row)
+    ]
+    [ text (String.fromInt week) ]
+
+view_departures : Time.Zone -> Time.Posix -> List Departure -> Html Msg
+view_departures zone today departures =
+  case List.head departures of
+    Just departure ->
+      let
+        weekday = Time.toWeekday departure.zone departure.start
+        column = weekday_to_number weekday + 2
+        row = week_row zone today departure.start
+        date = Date.fromPosix departure.zone departure.start
+      in
+        if row < 1 then
+          text ""
+        else
+          div
+            [ class "departure-item"
+            , style "grid-column" (String.fromInt column)
+            , style "grid-row" (String.fromInt row)
+            , onClick (Departure_Clicked departures)
+            ]
+            [ div [] [ text (String.fromInt (Date.day date)) ]
+            , div [] [ text (Date.format "MMMM" date) ]
+            ]
+
+    Nothing ->
+      text ""
+
+group_departures_by_day : List Departure -> List (List Departure)
+group_departures_by_day departures =
+  let
+    departures_sorted_by_start_time =
+      List.sortBy (\departure -> Time.posixToMillis departure.start) departures
+  in
+    List.foldl
+      (\departure grouped_departures ->
+        case grouped_departures of
+          -- If grouped_departures is not empty
+          previous_group :: remaining_groups ->
+            case List.head previous_group of
+              -- Get head of previous_group == previous_departure if not Nothing
+              Just previous_departure ->
+                let
+                  current_date = Date.fromPosix departure.zone departure.start
+                  previous_date = Date.fromPosix previous_departure.zone previous_departure.start
+                in
+                  if current_date == previous_date then
+                    -- Prepend departure to the current day group
+                    (departure :: previous_group) :: remaining_groups
+                  else
+                    -- Start a new day group and prepend it to grouped_departures
+                    [ departure ] :: grouped_departures
+
+              -- This should not normally happen because empty groups are never created, but all paths needs to be defined
+              Nothing -> [ departure ] :: remaining_groups
+
+          -- Create the initial List (List Departure) for the first departure
+          [] -> [ [ departure ] ]
+      )
+      []
+      departures_sorted_by_start_time
+
+view_departure_day : Time.Zone -> List Departure -> Html Msg
+view_departure_day zone departures = div [] []
+
 view_step_panel : Model -> Html Msg
 view_step_panel model =
   case model.step of
@@ -676,7 +832,19 @@ view_step_panel model =
         ]
       )
 
-    Departure_Step -> div [] (List.map view_departure model.departures)
+    Departure_Step ->
+      div [ class "departure" ]
+      (List.map
+        (view_week_number model.system_zone model.today)
+        (List.range 1 (lastest_week_row model.system_zone model.today model.departures))
+        ++ List.map
+             (view_departures model.system_zone model.today)
+             (group_departures_by_day model.departures)
+      )
+
+    Departure_Day_Step departures ->
+      div [ class "departure-day" ] [ view_departure_day model.system_zone departures ]
+
     Confirm_Pay_Step -> div [] [ text "Bekræft og betal" ]
 
 view_ticket_picker : Model -> Html Msg
@@ -704,5 +872,4 @@ view_ticket_picker model =
     ]
 
 view : Model -> Html Msg
-view model =
-  div [ class "app" ] [ div [ class "app-scroll" ] [ view_header, view_ticket_picker model ] ]
+view model =  div [ class "app" ] [ div [ class "app-scroll" ] [ view_header, view_ticket_picker model ] ]

@@ -315,13 +315,19 @@ paths:
           schema:
             type: integer
           description: Unikt ID på havnen.
-        - name: time
+        - name: zone
           in: query
-          required: true
+          required: false
           schema:
             type: string
-            format: date-time
-          description: Tidspunktet for afgang i ISO 8601-format.
+          description: Tidszonen for afgangen, f.eks. Europe/Berlin.
+        - name: start
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+          description: Afgangstidspunktet som POSIX-tid i millisekunder.
       responses:
         "201":
           description: Afgangen blev oprettet.
@@ -349,13 +355,19 @@ paths:
           schema:
             type: integer
           description: Unikt ID på havnen.
-        - name: time
+        - name: zone
           in: query
           required: false
           schema:
             type: string
-            format: date-time
-          description: Tidspunktet for afgang i ISO 8601-format.
+          description: Tidszonen for afgangen, f.eks. Europe/Berlin.
+        - name: start
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+          description: Afgangstidspunktet som POSIX-tid i millisekunder.
         - name: canceled
           in: query
           required: false

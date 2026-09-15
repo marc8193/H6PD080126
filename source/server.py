@@ -71,7 +71,8 @@ id INTEGER PRIMARY KEY AUTOINCREMENT,
 user_id INTEGER NOT NULL,
 ferry_id INTEGER NOT NULL,
 harbour_id INTEGER NOT NULL,
-time DATETIME NOT NULL,
+zone TEXT NOT NULL,
+start INTEGER NOT NULL,
 canceled INTEGER NOT NULL DEFAULT 0,
 FOREIGN KEY (user_id) REFERENCES users(id),
 FOREIGN KEY (ferry_id) REFERENCES ferries(id),
@@ -449,7 +450,8 @@ def post_departure():
   user_id = request.args.get("user_id", type=int)
   ferry_id = request.args.get("ferry_id", type=int)
   harbour_id = request.args.get("harbour_id", type=int)
-  time = request.args.get("time", type=datetime.fromisoformat)
+  zone = request.args.get("zone", type=str)
+  start = request.args.get("start", type=int)
 
   if user_id is None:
     return jsonify(message="Missing or invalid user_id"), 400
@@ -460,21 +462,24 @@ def post_departure():
   if harbour_id is None:
     return jsonify(message="Missing or invalid harbour_id"), 400
 
-  if time is None:
-    return jsonify(message="Missing or invalid time"), 400
+  if zone is None:
+    return jsonify(message="Missing or invalid zone"), 400
+
+  if start is None:
+    return jsonify(message="Missing or invalid start"), 400
 
   connection = get_connection()
 
   try:
     departure = connection.execute(
       """
-      INSERT INTO departures (user_id, ferry_id, harbour_id, time)
-      SELECT id, ?, ?, ?
+      INSERT INTO departures (user_id, ferry_id, harbour_id, zone, start)
+      SELECT id, ?, ?, ?, ?
       FROM users
       WHERE id = ? AND role = 'operator'
       RETURNING id
       """,
-      (ferry_id, harbour_id, time.isoformat(), user_id)
+      (ferry_id, harbour_id, zone, start, user_id)
     ).fetchone()
 
     if departure is None:
@@ -527,8 +532,8 @@ def get_departures():
     for row in query_result.fetchall():
       departure = {
         "id": row["id"],
-        "time": row["time"],
-        "week": datetime.fromisoformat(row["time"]).isocalendar().week,
+        "zone": row["zone"],
+        "start": row["start"],
         "canceled": bool(row["canceled"]),
         "user": {
           "id": row["user_id"],
@@ -551,6 +556,7 @@ def get_departures():
     for departure in departures:
       query = """
         SELECT
+          capacities.id,
           capacities.category,
           capacities.maximum
         FROM capacities
@@ -575,7 +581,8 @@ def patch_departures():
   id = request.args.get("id", type=int)
   ferry_id = request.args.get("ferry_id", type=int)
   harbour_id = request.args.get("harbour_id", type=int)
-  time = request.args.get("time", type=datetime.fromisoformat)
+  zone = request.args.get("zone", type=str)
+  start = request.args.get("start", type=int)
   canceled = request.args.get("canceled", type=str)
 
   if id is None:
@@ -593,8 +600,11 @@ def patch_departures():
     if harbour_id is not None:
       connection.execute("UPDATE departures SET harbour_id = ? WHERE id = ?", (harbour_id, id))
 
-    if time is not None:
-      connection.execute("UPDATE departures SET time = ? WHERE id = ?", (time.isoformat(), id))
+    if zone is not None:
+      connection.execute("UPDATE departures SET zone = ? WHERE id = ?", (zone, id))
+
+    if start is not None:
+      connection.execute("UPDATE departures SET start = ? WHERE id = ?", (start, id))
 
     if canceled is not None:
       connection.execute("UPDATE departures SET canceled = ? WHERE id = ?", (canceled, id))
@@ -705,7 +715,8 @@ def get_tickets():
       vehicles.variant,
       vehicles.identification,
       departures.id AS departure_id,
-      departures.time AS departure_time,
+      departures.zone AS departure_zone,
+      departures.start AS departure_start,
       users.id AS user_id,
       users.name AS user_name,
       users.email AS user_email,
@@ -734,7 +745,8 @@ def get_tickets():
         "category": row["category"],
         "departure": {
           "id": row["departure_id"],
-          "time": row["departure_time"],
+          "zone": row["departure_zone"],
+          "start": row["departure_start"],
         },
         "user": {
           "id": row["user_id"],

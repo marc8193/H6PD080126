@@ -63,3 +63,9 @@ billetvælgeren, herunder håndtering af dropdown-menuer og valg af billet- og k
 Datahåndteringen i billetvælgeren blev videreudviklet og finpudset. Billetterne blev omstruktureret,
 så den samme datastruktur benyttes ved både hentning og oprettelse af billetter.
 Derudover blev indlæsningen af data fra API'et udvidet og tilpasset den nye datastruktur.
+
+## Dag 13 – 15/09-2026
+
+Der blev udarbejdet en kalender-widget til visning og valg af afgange. Afgangene blev grupperet
+efter dato og placeret i kalenderen ud fra uge og ugedag.
+Derudover blev API'et justeret, så de nødvendige data for en afgang er korrekte.

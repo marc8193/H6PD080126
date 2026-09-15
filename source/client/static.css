@@ -253,6 +253,47 @@
   transform: translateY(0.3rem);
 }
 
+.departure {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0.25rem;
+  border-radius: 1rem;
+}
+
+.departure-item {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  background-color: var(--secondary);
+  box-sizing: border-box;
+  border: 0.1rem dashed transparent;
+  cursor: pointer;
+  border-radius: 1rem;
+}
+
+.departure-item:hover {
+  color: var(--text);
+  background-color: var(--accent);
+  border-color: var(--primary);
+}
+
+.week-number-departure-item {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  color: var(--text);
+  background-color: var(--secondary);
+  font-size: 1.5rem;
+  font-weight: bold;
+  border-radius: 1rem;
+}
+
 .radio-button {
   display: flex;
   align-items: center;
