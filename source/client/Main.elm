@@ -34,9 +34,10 @@ type alias Flags =
 
 type Step
   = Departure_From_Step
+  | Arrival_At_Step
   | Ticket_Step
   | Departure_Step
-  | Departure_Day_Step (List Departure)
+  | Departure_Day_Step (List Stop)
   | Confirm_Pay_Step
 
 type Dropdown = Create_Ticket_Dropdown | Vehicle_Variant_Dropdown Int
@@ -65,7 +66,7 @@ type alias User =
   , role : String
   }
 
-type alias Departure =
+type alias Stop =
   { id : Int
   , ferry : Ferry
   , harbour : Harbour
@@ -96,7 +97,8 @@ type Category
 
 type alias Ticket =
   { id : Int
-  , departure : Departure
+  , departure : Stop
+  , arrival : Stop
   , user : User
   , category : Category
   }
@@ -110,7 +112,7 @@ type alias Model =
   , user : User
   , harbours : List Harbour
   , tickets : Dict Int Ticket
-  , departures : List Departure
+  , trips : List Stop
   }
 
 nil_user : User
@@ -134,6 +136,16 @@ nil_ticket =
       , canceled = False
       }
 
+  , arrival =
+      { id = -1
+      , ferry = { id = -1, name = "", capacities = [] }
+      , harbour = { id = -1, name = "" }
+      , user = nil_user
+      , zone = Time.utc
+      , start = Time.millisToPosix 0
+      , canceled = False
+      }
+      
   , user = nil_user
   , category = Person (Person_Details "" "" "")
   }
@@ -148,12 +160,12 @@ init flags =
     , user = nil_user
     , harbours = []
     , tickets = Dict.singleton 0 nil_ticket
-    , departures = []
+    , trips = []
     }
   , Cmd.batch
     [ Task.perform Got_Time Time.now
     , get_harbours flags.server_url
-    , get_users flags.server_url 2
+    , get_users flags.server_url 1
     ]
   )
 
@@ -229,10 +241,10 @@ zone_decoder =
           Nothing -> Decode.fail ("Unknown time zone: " ++ name)
       )
 
-departures_decoder : Decode.Decoder Departure
-departures_decoder =
+stop_decoder : Decode.Decoder Stop
+stop_decoder =
   Decode.map7
-    Departure
+    Stop
     (Decode.field "id" Decode.int)
     (Decode.field "ferry" ferries_decoder)
     (Decode.field "harbour" harbours_decoder)
@@ -295,9 +307,16 @@ category_decoder =
 tickets_decoder : Decode.Decoder Ticket
 tickets_decoder =
   Decode.map4
-    Ticket
+    (\id stops user category ->
+      case ( List.head stops, List.reverse stops |> List.head ) of
+        ( Just departure, Just arrival ) ->
+          Ticket id departure arrival user category
+
+        _ ->
+          Debug.todo "Ticket must contain at least one stop"
+    )
     (Decode.field "id" Decode.int)
-    (Decode.field "departure" departures_decoder)
+    (Decode.field "stops" (Decode.list stop_decoder))
     (Decode.field "user" users_decoder)
     category_decoder
 
@@ -320,8 +339,8 @@ variant_to_query_string variant =
 ticket_query : Ticket -> String
 ticket_query ticket =
   let
-    common =
-      "?departure_id=" ++ String.fromInt ticket.departure.id
+    common = "?stop_ids=" ++ String.fromInt ticket.departure.id
+        ++ "&stop_ids=" ++ String.fromInt ticket.arrival.id
         ++ "&user_id=" ++ String.fromInt ticket.user.id
         ++ "&category=" ++ category_to_query_string ticket.category
   in
@@ -353,8 +372,8 @@ get_departures server_url harbour_id =
   case harbour_id of
     Just id ->
       Http.get
-        { url = server_url ++ "/departures?harbour_id=" ++ String.fromInt id
-        , expect = Http.expectJson Got_Departures (Decode.list departures_decoder)
+        { url = server_url ++ "/stops?harbour_id=" ++ String.fromInt id
+        , expect = Http.expectJson Got_Departures (Decode.list stop_decoder)
         }
 
     Nothing -> Cmd.none
@@ -368,10 +387,12 @@ get_harbours server_url =
 
 post_ticket : String -> Ticket -> Cmd Msg
 post_ticket server_url ticket =
+  let _ = Debug.log "" ticket
+  in
   Http.post
     { url = server_url ++ "/tickets" ++ ticket_query ticket
     , body = Http.emptyBody
-    , expect = Http.expectWhatever Ticket_Posted
+    , expect = Http.expectWhatever Got_Post_Ticket
     }
 
 get_tickets : String -> Int -> Cmd Msg
@@ -397,17 +418,18 @@ type Msg
   | Got_Users (Result Http.Error User)
   -- Harbour
   | Got_Harbours (Result Http.Error (List Harbour))
-  | Harbour_Selected Harbour
+  | Departure_From_Selected Harbour
+  | Arrival_At_Selected Harbour
   -- Ticket
-  | Ticket_Posted (Result Http.Error ())
+  | Got_Post_Ticket (Result Http.Error ())
   | Got_Ticket (Result Http.Error (List Ticket))
   | Create_Ticket_Selected Category
   | Vehicle_Ticket_Variant_Selected Int Variant
   | Ticket_Changed Int Ticket_Field String
-  -- Departure
-  | Got_Departures (Result Http.Error (List Departure))
-  | Departure_Day_Clicked (List Departure)
-  | Departure_Selected Departure
+  -- Stop
+  | Got_Departures (Result Http.Error (List Stop))
+  | Departure_Day_Clicked (List Stop)
+  | Departure_Selected Stop
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -417,11 +439,8 @@ update msg model =
           Departure_Step ->
             case model.tickets |> Dict.values |> List.head of
               Just ticket ->
-                let
-                  _ = Debug.log "Departures" model.departures
-                in
-                  ( { model | step = step }
-                  , get_departures model.flags.server_url (Just ticket.departure.harbour.id) )
+                ( { model | step = step }
+                , get_departures model.flags.server_url (Just ticket.departure.harbour.id) )
 
               Nothing -> ( { model | step = step }, Cmd.none )
 
@@ -463,7 +482,7 @@ update msg model =
 
         Err error -> let _ = Debug.log "Harbours - HTTP error" error in ( model, Cmd.none )
 
-    Harbour_Selected harbour ->
+    Departure_From_Selected harbour ->
       ( { model
           | tickets =
             Dict.map
@@ -472,12 +491,27 @@ update msg model =
                 in { ticket | departure = { departure | harbour = harbour } }
               ) model.tickets
 
+          , step = Arrival_At_Step
+        }
+      , Cmd.none
+      )
+
+    Arrival_At_Selected harbour ->
+      ( { model
+          | tickets =
+            Dict.map
+              (\_ ticket ->
+                let arrival = ticket.arrival
+                in { ticket | arrival = { arrival | harbour = harbour } }
+              ) model.tickets
+
           , step = Ticket_Step
         }
       , Cmd.none
       )
 
-    Ticket_Posted result ->
+
+    Got_Post_Ticket result ->
       case result of
         Ok _ ->
           ( model, Cmd.none )
@@ -556,7 +590,7 @@ update msg model =
 
     Got_Departures result ->
       case result of
-        Ok departures -> ( { model | departures = departures }, Cmd.none )
+        Ok departures -> ( { model | trips = departures }, Cmd.none )
         Err error -> let _ = Debug.log "Departures - HTTP error" error in ( model, Cmd.none )
 
     Departure_Day_Clicked selected_departures ->
@@ -797,7 +831,7 @@ week_row zone today departure =
     -- +1 because CSS grid rows start at 1
     delta_week + 1
 
-latest_week_row : Time.Zone -> Time.Posix -> List Departure -> Int
+latest_week_row : Time.Zone -> Time.Posix -> List Stop -> Int
 latest_week_row zone today departures =
   departures
     |> List.map (\departure -> week_row zone today departure.start)
@@ -817,7 +851,7 @@ view_week_number zone today row =
     ]
     [ text (String.fromInt week) ]
 
-view_departures : Time.Zone -> Time.Posix -> List Departure -> Html Msg
+view_departures : Time.Zone -> Time.Posix -> List Stop -> Html Msg
 view_departures zone today departures =
   case List.head departures of
     Just departure ->
@@ -843,7 +877,7 @@ view_departures zone today departures =
     Nothing ->
       text ""
 
-group_departures_by_day : List Departure -> List (List Departure)
+group_departures_by_day : List Stop -> List (List Stop)
 group_departures_by_day departures =
   let
     departures_sorted_by_start_time =
@@ -871,7 +905,7 @@ group_departures_by_day departures =
               -- This should not normally happen because empty groups are never created, but all paths needs to be defined
               Nothing -> [ departure ] :: remaining_groups
 
-          -- Create the initial List (List Departure) for the first departure
+          -- Create the initial List (List Stop) for the first departure
           [] -> [ [ departure ] ]
       )
       []
@@ -885,7 +919,7 @@ format_departure_time zone posix =
   in
     String.fromInt hour ++ ":" ++ String.padLeft 2 '0' (String.fromInt minute)
 
-view_departure_day : Time.Zone -> List Departure -> Dict Int Ticket -> Html Msg
+view_departure_day : Time.Zone -> List Stop -> Dict Int Ticket -> Html Msg
 view_departure_day zone departures tickets =
   div [ class "departure-day" ]
     (List.map
@@ -930,11 +964,27 @@ view_step_panel model =
         (List.map
           (\harbour ->
             view_radio_button
-              Harbour_Selected
+              Departure_From_Selected
               (model.tickets
                 |> Dict.values
                 |> List.head
                 |> Maybe.map (\ticket -> ticket.departure.harbour)
+              )
+              harbour
+          )
+          model.harbours
+        )
+        
+    Arrival_At_Step ->
+      div [ class "harbour-list" ]
+        (List.map
+          (\harbour ->
+            view_radio_button
+              Arrival_At_Selected
+              (model.tickets
+                |> Dict.values
+                |> List.head
+                |> Maybe.map (\ticket -> ticket.arrival.harbour)
               )
               harbour
           )
@@ -963,10 +1013,10 @@ view_step_panel model =
       div [ class "departure" ]
       (List.map
         (view_week_number model.system_zone model.today)
-        (List.range 1 (latest_week_row model.system_zone model.today model.departures))
+        (List.range 1 (latest_week_row model.system_zone model.today model.trips))
         ++ List.map
              (view_departures model.system_zone model.today)
-             (group_departures_by_day model.departures)
+             (group_departures_by_day model.trips)
       )
 
     Departure_Day_Step departures -> view_departure_day model.system_zone departures model.tickets
@@ -979,6 +1029,8 @@ view_ticket_picker model =
   div [ class "ticket-picker" ]
     [ div [ class "step-selector" ]
       [ view_step model.step Departure_From_Step "Udrejse"
+      , view_separator
+      , view_step model.step Arrival_At_Step "Indrejse"
       , view_separator
       , view_step model.step Ticket_Step "Billet"
       , view_separator

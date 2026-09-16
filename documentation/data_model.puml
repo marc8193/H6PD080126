@@ -1,7 +1,6 @@
 @startuml
 skinparam linetype ortho
 skinparam dpi 400
-skinparam nodesep 100
 
 enum Rolle
 {
@@ -35,7 +34,7 @@ enum Kategori
 class Kapacitet
 {
   id: Integer
-  færge_id: FK
+  færge_id: Færge FK
   kategori: Kategori
   maksimum: Integer
 }
@@ -46,22 +45,29 @@ class Havn
   navn: String
 }
 
-class Afgang
+class Stop
 {
   id: Integer
-  bruger_id: FK
-  færge_id: FK
-  havn_id: FK
-  tidspunkt: Datetime
+  bruger_id: Bruger FK
+  færge_id: Færge FK
+  havn_id: Havn FK
+  zone: String
+  start: Int
   aflyst: Byte
 }
 
 class Billet
 {
   id: Integer
-  afgang_id: FK
-  bruger_id: FK
+  bruger_id: Bruger FK
   kategori: Kategori
+}
+
+class Stop_Billet
+{
+  id: Integer
+  stop_id: Stop FK
+  billet_id: Billet FK
 }
 
 enum Variant
@@ -74,7 +80,7 @@ enum Variant
 class Køretøj
 {
   id: Integer
-  billet_id: FK
+  billet_id: Billet FK
   variant: Variant
   identifikationsnummer: String
 }
@@ -82,7 +88,7 @@ class Køretøj
 class Person
 {
   id: Integer
-  billet_id: FK
+  billet_id: Billet FK
   fornavn: String
   efternavn: String
   fødselsdato: Date
@@ -93,12 +99,14 @@ Billet -- Kategori
 Kapacitet -- Kategori
 Køretøj -- Variant
 
-Bruger "1" -right- "0..*" Afgang: Operatør
-Færge "1" -- "0..*" Afgang
-Havn "1" -- "0..*" Afgang
+Bruger "1" -right- "0..*" Stop: Operatør
+Færge "1" -- "0..*" Stop
+Havn "1" -- "0..*" Stop
 Færge "1" -- "1..*" Kapacitet
 
-Afgang "1" -- "0..*" Billet
+Stop "1" -- "0..*" Stop_Billet
+Billet "1" -- "2..*" Stop_Billet
+
 Bruger "1" -- "1..*" Billet: Kunde
 
 Billet "1" -- "0..1" Køretøj

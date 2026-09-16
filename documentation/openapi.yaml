@@ -272,7 +272,7 @@ paths:
         "400":
           description: Ugyldige data.
 
-  /api/v1/departures:
+  /api/v1/stops:
     get:
       summary: Hent en liste over afgange
       parameters:
@@ -405,11 +405,14 @@ paths:
     post:
       summary: Opret en ny billet
       parameters:
-        - name: departure_id
+        - name: stop_ids
           in: query
           required: true
           schema:
-            type: integer
+            type: array
+            minItems: 2
+            items:
+              type: integer
           description: Unikt ID på afgangen.
         - name: user_id
           in: query
