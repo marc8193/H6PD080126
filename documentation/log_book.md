@@ -69,3 +69,8 @@ Derudover blev indlæsningen af data fra API'et udvidet og tilpasset den nye dat
 Der blev udarbejdet en kalender-widget til visning og valg af afgange. Afgangene blev grupperet
 efter dato og placeret i kalenderen ud fra uge og ugedag.
 Derudover blev API'et justeret, så de nødvendige data for en afgang er korrekte.
+
+## Dag 14 – 16/09-2026
+
+Afgangsvælgeren blev udarbejdet, så afgange kan vises og vælges for den valgte dag.
+Derudover blev klienten udvidet med mulighed for at oprette billetter gennem API'et.

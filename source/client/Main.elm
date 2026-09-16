@@ -8,12 +8,14 @@ import Html.Attributes exposing (class, classList, style, placeholder, required,
 import Html.Events exposing (onClick, onInput, onMouseLeave)
 import Http
 import Json.Decode as Decode
+import Json.Encode as Encode
 import Svg exposing (path, svg)
 import Svg.Attributes exposing (d, fill, viewBox)
 import Task
 import Time
 import Time.Extra as TimeExtra
 import TimeZone
+import Url
 
 -- MAIN
 
@@ -299,6 +301,45 @@ tickets_decoder =
     (Decode.field "user" users_decoder)
     category_decoder
 
+category_to_query_string : Category -> String
+category_to_query_string category =
+  case category of
+    Person _ -> "person"
+    Pet -> "pet"
+    Breakfast -> "breakfast"
+    Firstclass -> "firstclass"
+    Vehicle _ -> "vehicle"
+
+variant_to_query_string : Variant -> String
+variant_to_query_string variant =
+  case variant of
+    Car -> "car"
+    Truck -> "truck"
+    Bicycle -> "bicyclce"
+
+ticket_query : Ticket -> String
+ticket_query ticket =
+  let
+    common =
+      "?departure_id=" ++ String.fromInt ticket.departure.id
+        ++ "&user_id=" ++ String.fromInt ticket.user.id
+        ++ "&category=" ++ category_to_query_string ticket.category
+  in
+    case ticket.category of
+      Person person ->
+        common
+          ++ "&firstname=" ++ Url.percentEncode person.firstname
+          ++ "&lastname=" ++ Url.percentEncode person.lastname
+          ++ "&birthday=" ++ Url.percentEncode person.birthday
+
+      Vehicle vehicle ->
+        common
+          ++ "&variant=" ++ variant_to_query_string vehicle.variant
+          ++ "&identification=" ++ Url.percentEncode vehicle.identification
+
+      Pet -> common
+      Breakfast -> common
+      Firstclass -> common
 
 get_users : String -> Int -> Cmd Msg
 get_users server_url id =
@@ -325,6 +366,14 @@ get_harbours server_url =
   , expect = Http.expectJson Got_Harbours (Decode.list harbours_decoder)
   }
 
+post_ticket : String -> Ticket -> Cmd Msg
+post_ticket server_url ticket =
+  Http.post
+    { url = server_url ++ "/tickets" ++ ticket_query ticket
+    , body = Http.emptyBody
+    , expect = Http.expectWhatever Ticket_Posted
+    }
+
 get_tickets : String -> Int -> Cmd Msg
 get_tickets server_url user_id =
   Http.get
@@ -350,13 +399,15 @@ type Msg
   | Got_Harbours (Result Http.Error (List Harbour))
   | Harbour_Selected Harbour
   -- Ticket
+  | Ticket_Posted (Result Http.Error ())
   | Got_Ticket (Result Http.Error (List Ticket))
   | Create_Ticket_Selected Category
   | Vehicle_Ticket_Variant_Selected Int Variant
   | Ticket_Changed Int Ticket_Field String
   -- Departure
   | Got_Departures (Result Http.Error (List Departure))
-  | Departure_Clicked (List Departure)
+  | Departure_Day_Clicked (List Departure)
+  | Departure_Selected Departure
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -374,8 +425,13 @@ update msg model =
 
               Nothing -> ( { model | step = step }, Cmd.none )
 
-          Ticket_Step ->
-            let _ = Debug.log "Tickets" model.tickets in ( { model | step = step }, Cmd.none )
+          Confirm_Pay_Step ->
+            ( { model | step = step }
+            , model.tickets
+                |> Dict.values
+                |> List.map (post_ticket model.flags.server_url)
+                |> Cmd.batch
+            )
 
           _ -> ( { model | step = step }, Cmd.none )
 
@@ -420,6 +476,18 @@ update msg model =
         }
       , Cmd.none
       )
+
+    Ticket_Posted result ->
+      case result of
+        Ok _ ->
+          ( model, Cmd.none )
+
+        Err error ->
+          let
+            _ =
+              Debug.log "Ticket POST failed" error
+          in
+            ( model, Cmd.none )
 
     Got_Ticket result ->
       case result of
@@ -491,8 +559,21 @@ update msg model =
         Ok departures -> ( { model | departures = departures }, Cmd.none )
         Err error -> let _ = Debug.log "Departures - HTTP error" error in ( model, Cmd.none )
 
-    Departure_Clicked selected_departures ->
+    Departure_Day_Clicked selected_departures ->
       ( { model | step = Departure_Day_Step selected_departures }, Cmd.none )
+
+    Departure_Selected selected_departure ->
+      ( { model
+          | tickets =
+            Dict.map
+              (\_ ticket ->
+                let departure = ticket.departure
+                in { ticket | departure = selected_departure }
+              ) model.tickets
+        }
+      , Cmd.none
+      )
+
 
 -- VIEW WIDGETS
 
@@ -702,18 +783,22 @@ weekday_to_number weekday =
 
 week_start : Time.Zone -> Time.Posix -> Time.Posix
 week_start zone start =
-  TimeExtra.add TimeExtra.Day (-(weekday_to_number (Time.toWeekday zone start))) zone start
+  start
+    |> TimeExtra.floor TimeExtra.Day zone
+    |> TimeExtra.add TimeExtra.Day (-(weekday_to_number (Time.toWeekday zone start))) zone
 
 week_row : Time.Zone -> Time.Posix -> Time.Posix -> Int
 week_row zone today departure =
   let
     current_week = week_start zone today
     departure_week = week_start zone departure
+    delta_week = TimeExtra.diff TimeExtra.Week zone current_week departure_week
   in
-  TimeExtra.diff TimeExtra.Week zone current_week departure_week + 1
+    -- +1 because CSS grid rows start at 1
+    delta_week + 1
 
-lastest_week_row : Time.Zone -> Time.Posix -> List Departure -> Int
-lastest_week_row zone today departures =
+latest_week_row : Time.Zone -> Time.Posix -> List Departure -> Int
+latest_week_row zone today departures =
   departures
     |> List.map (\departure -> week_row zone today departure.start)
     |> List.maximum
@@ -749,7 +834,7 @@ view_departures zone today departures =
             [ class "departure-item"
             , style "grid-column" (String.fromInt column)
             , style "grid-row" (String.fromInt row)
-            , onClick (Departure_Clicked departures)
+            , onClick (Departure_Day_Clicked departures)
             ]
             [ div [] [ text (String.fromInt (Date.day date)) ]
             , div [] [ text (Date.format "MMMM" date) ]
@@ -792,8 +877,50 @@ group_departures_by_day departures =
       []
       departures_sorted_by_start_time
 
-view_departure_day : Time.Zone -> List Departure -> Html Msg
-view_departure_day zone departures = div [] []
+format_departure_time : Time.Zone -> Time.Posix -> String
+format_departure_time zone posix =
+  let
+    hour = Time.toHour zone posix
+    minute = Time.toMinute zone posix
+  in
+    String.fromInt hour ++ ":" ++ String.padLeft 2 '0' (String.fromInt minute)
+
+view_departure_day : Time.Zone -> List Departure -> Dict Int Ticket -> Html Msg
+view_departure_day zone departures tickets =
+  div [ class "departure-day" ]
+    (List.map
+      (\departure ->
+        div
+          [ class "departure-day-item"
+          , classList
+            [ ( "selected"
+              , Just departure ==
+                  (tickets
+                    |> Dict.values
+                    |> List.head
+                    |> Maybe.map (\ticket -> ticket.departure)
+                  )
+              )
+            ]
+          , onClick (Departure_Selected departure)
+          ]
+          [ div [ class "departure-day-item-vertical" ]
+            [ span [] [ text (format_departure_time departure.zone departure.start) ]
+            , span [] [ text departure.harbour.name ]
+            ]
+          , div [ class "departure-day-item-horizontal" ] [ text "1t 30min" ]
+          , div [ class "departure-day-item-vertical" ]
+            [ span [] [ text (format_departure_time departure.zone departure.start) ]
+            , span [] [ text departure.harbour.name ]
+            ]
+          , div [ class "departure-day-item-vertical" ]
+            [ span [] [ text "120" ]
+            , span [] [ text "DKK" ]
+            ]
+          ]
+      )
+      departures
+    )
 
 view_step_panel : Model -> Html Msg
 view_step_panel model =
@@ -836,16 +963,16 @@ view_step_panel model =
       div [ class "departure" ]
       (List.map
         (view_week_number model.system_zone model.today)
-        (List.range 1 (lastest_week_row model.system_zone model.today model.departures))
+        (List.range 1 (latest_week_row model.system_zone model.today model.departures))
         ++ List.map
              (view_departures model.system_zone model.today)
              (group_departures_by_day model.departures)
       )
 
-    Departure_Day_Step departures ->
-      div [ class "departure-day" ] [ view_departure_day model.system_zone departures ]
+    Departure_Day_Step departures -> view_departure_day model.system_zone departures model.tickets
 
-    Confirm_Pay_Step -> div [] [ text "Bekræft og betal" ]
+    Confirm_Pay_Step -> div [] [ text "Bekræftet og betalt" ]
+
 
 view_ticket_picker : Model -> Html Msg
 view_ticket_picker model =
