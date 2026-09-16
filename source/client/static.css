@@ -300,6 +300,7 @@
   color: var(--text);
   background-color: var(--accent);
   border-color: var(--primary);
+  cursor: pointer;
 }
 
 .departure-day-item.selected {
