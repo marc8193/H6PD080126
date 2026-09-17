@@ -22,7 +22,7 @@ def dict_factory(cursor, row):
 
 def get_connection():
   if not hasattr(thread_local, "connection"):
-    connection = sqlite3.connect("build/booking.db")
+    connection = sqlite3.connect("booking.db")
     connection.row_factory = dict_factory
     connection.execute("PRAGMA foreign_keys = ON")
 

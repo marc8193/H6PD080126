@@ -2,7 +2,7 @@
   width: 100%;
   height: 100vh;
   box-sizing: border-box;
-  background-image: url("/asset/background.jpg");
+  background-image: url("background.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -430,7 +430,7 @@
 
 @font-face {
   font-family: "Alyamama";
-  src: url("/asset/font/Alyamama-VariableFont_wght.ttf") format("truetype");
+  src: url("font/Alyamama-VariableFont_wght.ttf") format("truetype");
   font-style: normal;
   font-weight: 100 900;
 }

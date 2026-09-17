@@ -12,12 +12,18 @@ if [[ "$#" == "0" ]]; then
 fi
 
 # --- Prep Directories ------------------------------------------------------------------------------
-mkdir -p build
+mkdir -p deploy
 
-# --- Build -----------------------------------------------------------------------------------------
-cd build
+# --- Deploy -----------------------------------------------------------------------------------------
+cd deploy
 if [[ "${all:-0}" == "1" || "${client:-0}" == "1" ]]; then
-  did_build=1 && elm make ../source/client/Main.elm --output=main.js;
+  did_build=1 && \
+    elm make ../source/client/Main.elm --output=main.js && \
+    cp -R ../source/client/index.html \
+      ../source/client/static.css \
+      ../source/server.py \
+      ../asset/font \
+      ../asset/background.jpg .
 fi
 if [[ "${all:-0}" == "1" || "${docs:-0}" == "1" ]]; then
   did_build=1 && plantuml -tpng ../documentation/*.puml -o ../asset;
