@@ -74,3 +74,9 @@ Derudover blev API'et justeret, så de nødvendige data for en afgang er korrekt
 
 Afgangsvælgeren blev udarbejdet, så afgange kan vises og vælges for den valgte dag.
 Derudover blev klienten udvidet med mulighed for at oprette billetter gennem API'et.
+
+## Dag 15 – 17/09-2026
+
+Produktet blev klargjort til hosting, og der blev foretaget den nødvendige finpudsning og fejlfinding
+i forbindelse med deployment. Derudover blev der udarbejdet unit tests til serveren for at verificere
+API'ets funktionalitet og databasehåndtering.
