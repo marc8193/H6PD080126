@@ -417,9 +417,6 @@ update msg model =
           Departure_Step ->
             case model.tickets |> Dict.values |> List.head of
               Just ticket ->
-                let
-                  _ = Debug.log "Departures" model.departures
-                in
                   ( { model | step = step }
                   , get_departures model.flags.server_url (Just ticket.departure.harbour.id) )
 
