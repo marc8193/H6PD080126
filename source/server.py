@@ -14,15 +14,17 @@ from flask_cors import CORS
 
 # Storage
 
-thread_local = threading.local()
-
 def dict_factory(cursor, row):
   fields = [column[0] for column in cursor.description]
   return {key: value for key, value in zip(fields, row)}
 
+thread_local = threading.local()
+
 def get_connection():
   if not hasattr(thread_local, "connection"):
-    connection = sqlite3.connect("booking.db")
+    database = app.config.get("DATABASE", "booking.db")
+
+    connection = sqlite3.connect(database)
     connection.row_factory = dict_factory
     connection.execute("PRAGMA foreign_keys = ON")
 
@@ -30,89 +32,88 @@ def get_connection():
 
   return thread_local.connection
 
-connection = get_connection()
+def create_tables(connection):
+  connection.execute("""
+  CREATE TABLE IF NOT EXISTS users(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  role TEXT NOT NULL,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL
+  )
+  """)
 
-connection.execute("""
-CREATE TABLE IF NOT EXISTS users(
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-role TEXT NOT NULL,
-name TEXT NOT NULL,
-email TEXT NOT NULL
-)
-""")
+  connection.execute("""
+  CREATE TABLE IF NOT EXISTS ferries(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL
+  )
+  """)
 
-connection.execute("""
-CREATE TABLE IF NOT EXISTS ferries(
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-name TEXT NOT NULL
-)
-""")
+  connection.execute("""
+  CREATE TABLE IF NOT EXISTS harbours(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL
+  )
+  """)
 
-connection.execute("""
-CREATE TABLE IF NOT EXISTS harbours(
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-name TEXT NOT NULL
-)
-""")
+  connection.execute("""
+  CREATE TABLE IF NOT EXISTS capacities(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ferry_id INTEGER NOT NULL,
+  category TEXT NOT NULL,
+  maximum INTEGER NOT NULL,
+  FOREIGN KEY (ferry_id) REFERENCES ferries(id)
+  )
+  """)
 
-connection.execute("""
-CREATE TABLE IF NOT EXISTS capacities(
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-ferry_id INTEGER NOT NULL,
-category TEXT NOT NULL,
-maximum INTEGER NOT NULL,
-FOREIGN KEY (ferry_id) REFERENCES ferries(id)
-)
-""")
+  connection.execute("""
+  CREATE TABLE IF NOT EXISTS departures(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  ferry_id INTEGER NOT NULL,
+  harbour_id INTEGER NOT NULL,
+  zone TEXT NOT NULL,
+  start INTEGER NOT NULL,
+  canceled INTEGER NOT NULL DEFAULT 0,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (ferry_id) REFERENCES ferries(id),
+  FOREIGN KEY (harbour_id) REFERENCES harbours(id)
+  )
+  """)
 
-connection.execute("""
-CREATE TABLE IF NOT EXISTS departures(
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-user_id INTEGER NOT NULL,
-ferry_id INTEGER NOT NULL,
-harbour_id INTEGER NOT NULL,
-zone TEXT NOT NULL,
-start INTEGER NOT NULL,
-canceled INTEGER NOT NULL DEFAULT 0,
-FOREIGN KEY (user_id) REFERENCES users(id),
-FOREIGN KEY (ferry_id) REFERENCES ferries(id),
-FOREIGN KEY (harbour_id) REFERENCES harbours(id)
-)
-""")
+  connection.execute("""
+  CREATE TABLE IF NOT EXISTS tickets(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  departure_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  category TEXT NOT NULL,
+  FOREIGN KEY (departure_id) REFERENCES departures(id),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+  )
+  """)
 
-connection.execute("""
-CREATE TABLE IF NOT EXISTS tickets(
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-departure_id INTEGER NOT NULL,
-user_id INTEGER NOT NULL,
-category TEXT NOT NULL,
-FOREIGN KEY (departure_id) REFERENCES departures(id),
-FOREIGN KEY (user_id) REFERENCES users(id)
-)
-""")
+  connection.execute("""
+  CREATE TABLE IF NOT EXISTS persons(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ticket_id INTEGER NOT NULL,
+  firstname TEXT NOT NULL,
+  lastname TEXT NOT NULL,
+  birthday DATE NOT NULL,
+  FOREIGN KEY (ticket_id) REFERENCES tickets(id)
+  )
+  """)
 
-connection.execute("""
-CREATE TABLE IF NOT EXISTS persons(
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-ticket_id INTEGER NOT NULL,
-firstname TEXT NOT NULL,
-lastname TEXT NOT NULL,
-birthday DATE NOT NULL,
-FOREIGN KEY (ticket_id) REFERENCES tickets(id)
-)
-""")
+  connection.execute("""
+  CREATE TABLE IF NOT EXISTS vehicles(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ticket_id INTEGER NOT NULL,
+  variant TEXT NOT NULL,
+  identification TEXT NOT NULL,
+  FOREIGN KEY (ticket_id) REFERENCES tickets(id)
+  )
+  """)
 
-connection.execute("""
-CREATE TABLE IF NOT EXISTS vehicles(
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-ticket_id INTEGER NOT NULL,
-variant TEXT NOT NULL,
-identification TEXT NOT NULL,
-FOREIGN KEY (ticket_id) REFERENCES tickets(id)
-)
-""")
-
-connection.commit()
+  connection.commit()
 
 # Presentation
 
@@ -777,5 +778,11 @@ def get_tickets():
   return jsonify(tickets), 200
 
 # Main
+if __name__ == "__main__":
+  app.config["DATABASE"] = "booking.db"
 
-app.run(debug=True)
+  connection = get_connection()
+
+  create_tables(connection)
+
+  app.run(debug=True)
