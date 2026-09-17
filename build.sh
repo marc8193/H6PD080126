@@ -28,6 +28,9 @@ fi
 if [[ "${all:-0}" == "1" || "${docs:-0}" == "1" ]]; then
   did_build=1 && plantuml -tpng ../documentation/*.puml -o ../asset;
 fi
+if [[ "${all:-0}" == "1" || "${test:-0}" == "1" ]]; then
+  did_build=1 && cd ../source && python -m unittest test_server.py && cd ../deploy
+fi
 cd ..
 
 # --- Warn On No Builds -----------------------------------------------------------------------------
