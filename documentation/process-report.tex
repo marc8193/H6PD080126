@@ -2,64 +2,11 @@
 
 \addbibresource{process-report.bib}
 
-\newcommand{\projectname}{Digital håndtering af færgebilletter}
-\newcommand{\student}{Marcus Haukelid Larsen}
-\newcommand{\supervisor}{Lars Thise Pedersen og Simon Hoxer Bønding}
+\newcommand{\projecttype}{Procesrapport}
 
 \begin{document}
 
-\pdfbookmark[1]{Forside}{frontpage}
-
-\begin{center}
-  {\Huge \textbf{\projectname}}
-
-  \vspace*{\fill}
-
-  {\Large \textbf{\student}}
-
-  \vspace*{\fill}
-
-  {\large \textbf{Procesrapport}}
-\end{center}
-
-\thispagestyle{empty}
-
-\newpage
-\begin{center}
-  {\large \textbf{Elev:} \student}
-  \vspace*{\fill}
-
-  {\large \textbf{Projektnavn:} \projectname}
-  \vspace*{\fill}
-
-  {\large \textbf{Uddannelsessted:} Techcollege, Struervej 70, 9220 Aalborg Øst, Denmark}
-  \vspace*{\fill}
-
-  {\large \textbf{Elevplads:} RTX A/S, Strømmen 6, 9400 Nørresundby, Denmark}
-  \vspace*{\fill}
-
-  {\large \textbf{Projektperiode:} 31/08-2026 - 29/09-2026}
-  \vspace*{\fill}
-
-  {\large \textbf{Afleveringsdato:} 24/09-2026}
-  \vspace*{\fill}
-
-  {\large \textbf{Fremlæggelsesdato:} 30/09-2026}
-  \vspace*{\fill}
-
-  {\large \textbf{Vejleder:} \supervisor}
-  \vspace*{\fill}
-
-  {\large \textbf{Underskrift:}}
-  \vspace*{\fill}
-
-  \begin{tabular}{p{6cm} p{6cm}}
-    \hrulefill & \hrulefill \\
-    Vejleder (\supervisor) & Elev (\student)
-  \end{tabular}
-\end{center}
-
-\thispagestyle{empty}
+\input{front-page.tex}
 
 \newpage
 \tableofcontents
@@ -106,16 +53,24 @@ programmering.
   \centering
   \includegraphics[width=1\textwidth]{database-model.png}
   \caption{Database model}
-  \label{fig:domain-model}
+  \label{fig:database-model}
 \end{figure}
-
-% Forklaring af hvordan datamodellen blev udledt og ændret undervejs.
-% Indsæt datamodel.
 
 \subsubsection{Brugerflow}
 
-% Forklaring af de vigtigste brugerflows.
-% Indsæt brugerflow.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{reservation-flow.png}
+  \caption{Reservation flow}
+  \label{fig:reservation-flow}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{validation-flow.png}
+  \caption{Validerings flow}
+  \label{fig:validerings-flow}
+\end{figure}
 
 \subsection{Database og API}
 
@@ -166,10 +121,10 @@ Der blev udarbejdet en skitse af brugergrænsefladen.
 
 \subsection{Dag 5 -- 04/09-2026}
 
-Udviklingen af serveren blev påbegyndt. Undervejs blev der identificeret en designfejl, hvor
-API-specifikationen var blevet specificeret på et for lavt niveau. Ideelt set burde systemet have
-både et high-level og et low-level API, men på grund af den begrænsede tid fokuseres der
-udelukkende på high-level API-designet.
+Udviklingen af serveren blev påbegyndt. Undervejs blev der identificeret en designfejl i
+API-specifikationen, som var blevet udarbejdet på et for lavt abstraktionsniveau. Ideelt set burde
+systemet have både et high-level og et low-level API, men på grund af den begrænsede tid blev der
+udelukkende fokuseret på high-level API-designet.
 
 \subsection{Dag 6 -- 05/09-2026}
 
@@ -225,5 +180,12 @@ blev klienten udvidet med mulighed for at oprette billetter gennem API'et.
 Produktet blev klargjort til hosting, og der blev foretaget den nødvendige finpudsning og
 fejlfinding i forbindelse med deployment. Derudover blev der udarbejdet unit tests til serveren
 for at verificere API'ets funktionalitet og databasehåndtering.
+
+\subsection{Dag 16 -- 18/09-2026}
+
+Proces- og produktrapporten blev påbegyndt. Bygge scriptet blev udvidet til at generere rapporterne,
+og CI-konfigurationen blev udarbejdet med de nødvendige LaTeX-afhængigheder, så rapporterne
+automatisk kan bygges ved en Github release.
+
 
 \end{document}
