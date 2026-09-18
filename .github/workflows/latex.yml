@@ -22,13 +22,14 @@ jobs:
         run: |
           apt-get update
           apt-get install -y \
-            plantuml \
             texlive-latex-base \
             texlive-latex-recommended \
             texlive-latex-extra \
             texlive-fonts-recommended \
             texlive-bibtex-extra \
-            biber
+            texlive-lang-european \
+            biber \
+            plantuml
 
       - name: Compile LaTeX to PDF
         run: ./build.sh docs
