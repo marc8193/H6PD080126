@@ -4,7 +4,6 @@ permissions:
   contents: write
 
 on:
-  push:
   release:
     types: [published]
 
