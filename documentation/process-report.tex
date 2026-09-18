@@ -1,10 +1,4 @@
-\documentclass{article}
-\usepackage{parskip}
-\usepackage{float}
-\usepackage{graphicx}
-\usepackage[backend=biber, style=numeric]{biblatex}
-\usepackage{listings}
-\usepackage{hyperref} % must be last import
+\input{preamble.tex}
 
 \addbibresource{process-report.bib}
 
@@ -96,6 +90,32 @@ programmering.
 \section{Udviklingsproces}
 
 \subsection{Analyse og design}
+
+\subsubsection{Domænemodel}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{domain-model.png}
+  \caption{Domænemodel}
+  \label{fig:domain-model}
+\end{figure}
+
+\subsubsection{Datamodel}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{database-model.png}
+  \caption{Database model}
+  \label{fig:domain-model}
+\end{figure}
+
+% Forklaring af hvordan datamodellen blev udledt og ændret undervejs.
+% Indsæt datamodel.
+
+\subsubsection{Brugerflow}
+
+% Forklaring af de vigtigste brugerflows.
+% Indsæt brugerflow.
 
 \subsection{Database og API}
 

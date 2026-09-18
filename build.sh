@@ -37,10 +37,11 @@ if [[ "${all:-0}" == "1" || "${docs:-0}" == "1" ]]; then
   did_build=1 && {
     cd "$project_root/build"
 
-    plantuml -tpng "$project_root"/documentation/*.puml -o "$project_root/asset"
+    plantuml -tpng "$project_root"/documentation/*.puml -o "$project_root/build"
+
+    export TEXINPUTS="$project_root/documentation:"
 
     report_files=("process-report" "product-report")
-
     for file in "${report_files[@]}"; do
       pdflatex -interaction=nonstopmode "$project_root/documentation/$file.tex"
       biber "$file"
