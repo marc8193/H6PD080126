@@ -1,0 +1,43 @@
+name: Build LaTeX PDFs
+
+permissions:
+  contents: write
+
+on:
+  push:
+  release:
+    types: [published]
+
+jobs:
+  build-pdf:
+    runs-on: ubuntu-latest
+
+    container:
+      image: debian:13
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y \
+            plantuml \
+            texlive-latex-base \
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-bibtex-extra \
+            biber
+
+      - name: Compile LaTeX to PDF
+        run: ./build.sh docs
+
+      - name: Attach PDFs to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/process-report.pdf
+            build/product-report.pdf

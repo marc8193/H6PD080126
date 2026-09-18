@@ -1,39 +1,65 @@
 #!/bin/bash
 set -eu
-cd "$(dirname "$0")"
 
-# --- Unpack Arguments ------------------------------------------------------------------------------
-for argument in "$@";
-do declare $argument="1";
+project_root="$(cd "$(dirname "$0")" && pwd)"
+cd "$project_root"
+
+# --- Unpack Arguments -----------------------------------------------------------------------------
+for argument in "$@"; do
+  declare "$argument=1"
 done
 
 if [[ "$#" == "0" ]]; then
-  all="1";
+  all="1"
 fi
 
-# --- Prep Directories ------------------------------------------------------------------------------
-mkdir -p deploy
+# --- Prep Directories -----------------------------------------------------------------------------
+mkdir -p build
 
-# --- Deploy -----------------------------------------------------------------------------------------
-cd deploy
+# --- Build ----------------------------------------------------------------------------------------
 if [[ "${all:-0}" == "1" || "${client:-0}" == "1" ]]; then
-  did_build=1 && \
-    elm make ../source/client/Main.elm --output=main.js && \
-    cp -R ../source/client/index.html \
-      ../source/client/static.css \
-      ../source/server.py \
-      ../asset/font \
-      ../asset/background.jpg .
-fi
-if [[ "${all:-0}" == "1" || "${docs:-0}" == "1" ]]; then
-  did_build=1 && plantuml -tpng ../documentation/*.puml -o ../asset;
-fi
-if [[ "${all:-0}" == "1" || "${test:-0}" == "1" ]]; then
-  did_build=1 && cd ../source && python -m unittest test_server.py && cd ../deploy
-fi
-cd ..
+  did_build=1 && {
+    mkdir -p "$project_root/build/deploy"
+    cd "$project_root/build/deploy"
 
-# --- Warn On No Builds -----------------------------------------------------------------------------
+    elm make "$project_root/source/client/Main.elm" --output=main.js
+
+    cp -R \
+      "$project_root/source/client/index.html" \
+      "$project_root/source/client/static.css" \
+      "$project_root/source/server.py" \
+      "$project_root/asset/font" \
+      "$project_root/asset/background.jpg" .
+  }
+fi
+
+if [[ "${all:-0}" == "1" || "${docs:-0}" == "1" ]]; then
+  did_build=1 && {
+    cd "$project_root/build"
+
+    plantuml -tpng "$project_root"/documentation/*.puml -o "$project_root/asset"
+
+    report_files=("process-report" "product-report")
+
+    for file in "${report_files[@]}"; do
+      pdflatex -interaction=nonstopmode "$project_root/documentation/$file.tex"
+      biber "$file"
+      pdflatex -interaction=nonstopmode "$project_root/documentation/$file.tex"
+      pdflatex -interaction=nonstopmode "$project_root/documentation/$file.tex"
+    done
+  }
+fi
+
+if [[ "${all:-0}" == "1" || "${test:-0}" == "1" ]]; then
+  did_build=1 && {
+    cd "$project_root/source"
+    python -m unittest test_server.py
+  }
+fi
+
+cd "$project_root"
+
+# --- Warn On No Builds ----------------------------------------------------------------------------
 if [[ "${did_build:-0}" == "0" ]]; then
   echo "[WARNING] no valid build target specified; must use build target names as arguments \
        to this script, like \`./build.sh all\`, \`./build.sh client\` or \`./build.sh docs\`."
