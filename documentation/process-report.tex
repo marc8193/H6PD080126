@@ -149,37 +149,76 @@ figur~\ref{mockup-departure-day}.
   \label{mockup-departure-day}
 \end{figure}
 
-\section{Metode- og teknologivalg}
+\section{Tekniske valg}
 
-Ved valg af teknologier til projektet blev der lagt vægt på, at teknologierne skulle være
-egnede til projektets omfang og samtidig understøtte en effektiv udviklingsproces. Da
-projektet havde en begrænset tidsramme, blev der så vidt muligt valgt teknologier, som der
-allerede var stiftet bekendtskab med. Nye teknologier blev kun valgt inden for områder,
-hvor der ikke var en tidligere erfaring, såsom webudvikling.
+De tekniske valg i projektet lagde primært vægt på, at de skulle være egnede til projektets
+omfang og samtidig understøtte en effektiv udviklingsproces. Da projektet havde en begrænset
+tidsramme, blev der så vidt muligt valgt værktøjer, som der allerede var stiftet bekendtskab
+med. Derudover ligger den primære ekspertise i Python og C, hvilket også spillede en rolle.
+Nye værktøjer blev primært valgt inden for områder, hvor der ikke var tidligere erfaring,
+såsom webudvikling.
 
 \subsection{Database}
 
-Databasen benytter SQLite3, da der allerede var stiftet bekendtskab med teknologien før
+Valget af database faldt på SQLite3, da der allerede var stiftet bekendtskab med produktet før
 projektets begyndelse. Derudover er det muligt at kommunikere med en SQLite-database
-udelukkende ved hjælp af Pythons standardbibliotek.
+udelukkende ved hjælp af Pythons standardbibliotek. På baggrund af de allerede beskrevne
+kriterier blev SQLite3 derfor vurderet som et passende valg til projektet.
 
-Et databasesystem såsom PostgreSQL kunne også have været benyttet, men grundet SQLite3's
-simplicitet blev dette vurderet som unødvendigt for projektets omfang. PostgreSQL tilbyder
-funktioner til blandt andet replikering, failover og load balancing
+Et databasesystem såsom PostgreSQL kunne også have været benyttet, men grundet
+SQLite-databasens simplicitet blev dette vurderet som unødvendigt for projektets omfang.
+PostgreSQL tilbyder funktioner til blandt andet replikering, failover og load balancing
 \cite{postgresql_high_availability}. Disse funktioner er ikke nødvendige for projektet, men
 kan være relevante i et større produktionsmiljø.
 
-
 \subsection{API}
+
+API'et benytter biblioteket Flask, da det er designet med fokus på simplicitet og gør det
+muligt hurtigt at komme i gang med udviklingen. Flask kræver kun en begrænset mængde
+opsætning for at etablere et simpelt og fungerende REST-API, samtidig med at funktionaliteten
+kan udvides efter behov. Dette passede godt til projektets begrænsede omfang og tidsramme
+samt den begrænsede tidligere erfaring med webudvikling og REST. Det gjorde det muligt at
+fokusere udviklingstiden på selve API'ets funktionalitet frem for opsætning og konfiguration.
+
+Django kunne alternativt have været benyttet og tilbyder blandt andet en indbygget ORM, som
+kan være en fordel i større projekter. Til projektets begrænsede omfang blev Flasks
+simplicitet dog vægtet højere end den ekstra funktionalitet, som Django tilbyder, da
+projektet kun indeholder et begrænset antal databaseforespørgsler.
 
 \subsection{Klient}
 \label{sec:klient}
+
+Grundet den begrænsede erfaring med webudvikling blev det undersøgt, hvilket bibliotek der
+ville være mest passende til projektet. Valget stod primært mellem React og Elm. React er
+udbredt inden for webudvikling og har et stort økosystem, men indeholder ikke alle de
+funktioner, der er nødvendige for at udvikle en komplet webapplikation. Det kombineres derfor
+ofte med yderligere biblioteker og værktøjer afhængigt af projektets behov.
+
+Elm minder derimod mere om den arbejdsgang, der kendes fra kompilerede sprog såsom C, hvor
+det primære værktøj er en compiler, som kompilerer kildekoden til det endelige produkt. Elm
+har desuden et stærkt typesystem, som gør det muligt for compileren at identificere mange
+fejl allerede under kompileringen. Denne arbejdsgang lå tættere på den eksisterende erfaring
+med programmering i C og var derfor en væsentlig faktor i valget af Elm.
+
+Elm introducerede dog en ukendt faktor i form af funktionel programmering. Der var tidligere
+stiftet begrænset bekendtskab med paradigmet på et hovedforløb, men da både React og Elm
+ville medføre en ny arbejdsgang, blev dette ikke vurderet som en afgørende ulempe ved valget
+af Elm.
+
+Under udviklingen blev der observeret en ulempe ved de funktionelle principper såsom
+lambda-funktioner og rekursion. Dette kan gøre kontrolflowet sværere at følge, da det ikke
+altid er tydeligt, hvor mange gange et stykke kode udføres. Et forudsigeligt kontrolflow gør
+det lettere at overskue programmets eksekvering. I~\cite{holzmann_power_of_ten} anbefales det
+blandt andet at undgå både direkte og indirekte rekursion for at øge forudsigeligheden af
+kontrolflowet.
 
 \subsection{Test og kvalitetssikring}
 
 \subsection{Konfigurationsstyring}
 
 \subsection{CI/CD og hosting}
+
+% Nævn noget om CORS og XSS %
 
 \section{Afgrænsning}
 
