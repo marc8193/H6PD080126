@@ -39,7 +39,8 @@ if [[ "${all:-0}" == "1" || "${docs:-0}" == "1" ]]; then
 
     plantuml -tpng "$project_root"/documentation/*.puml -o "$project_root/build"
 
-    export TEXINPUTS="$project_root/documentation:"
+    export TEXINPUTS="$project_root/documentation:$project_root/asset:"
+    export BIBINPUTS="$project_root/documentation:"
 
     report_files=("process-report" "product-report")
     for file in "${report_files[@]}"; do

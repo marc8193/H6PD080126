@@ -15,11 +15,73 @@
 
 \section{Læsevejledning}
 
+\section{Introduktion}
+
+Gennem historien har der været benyttet mange forskellige billethåndteringssystemer, men
+udviklingen kan overordnet inddeles i tre primære faser: den manuelle, den mekaniske og den
+digitale.
+
+Manuel bogføring var udgangspunktet for billethåndtering, hvor en medarbejder manuelt
+registrerede de enkelte billetter. Senere blev der udviklet papirbaserede systemer, som gjorde
+det muligt at standardisere udstedelsen og kontrollen af billetter.
+
+Hulbaserede billetter var et væsentligt skridt mod mere strømlinet billethåndtering. Ved at
+repræsentere information gennem huller i billetten blev det muligt for maskiner at aflæse og
+behandle information efter fastlagte regler. Samme princip blev blandt andet anvendt i
+stempelure, som oprindeligt registrerede arbejdstiden med et simpelt tidsstempel. For at
+effektivisere den efterfølgende behandling begyndte man senere at benytte hulkort, hvor
+arbejdstiden kunne registreres og efterfølgende maskinbehandles
+~\cite{wikipedia_time_clock,wikipedia_punched_card}. Dermed kunne dele af håndteringen
+automatiseres.
+
+Digital billethåndtering repræsenterer den digitale fase, hvor billetter håndteres digitalt.
+Det gør systemet markant mere dynamisk, da nye billettyper kan tilføjes, uden at der fysisk
+skal ændres noget. Købet kan foretages før ankomst, og valideringen kan ligeledes foretages
+digitalt. Rejsekortet er et eksempel på denne udvikling, hvor flere billettyper kan håndteres
+af det samme system, og valideringen kan udføres ved at scanne kortet eller QR-koden i appen
+~\cite{wikipedia_Rejsekort}.
+
 \section{Produktbeskrivelse}
 
 \section{Kravspecifikation}
 
+% Indsæt brugerhistorienerne og udarbejd en tabel som giver et mere konkret billed. %
+
 \section{Arkitektur}
+
+\subsubsection{Domænemodel}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{domain-model.png}
+  \caption{Domænemodel}
+  \label{fig:domain-model}
+\end{figure}
+
+\subsubsection{Datamodel}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{database-model.png}
+  \caption{Database model}
+  \label{fig:database-model}
+\end{figure}
+
+\subsubsection{Brugerflow}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{reservation-flow.png}
+  \caption{Reservation flow}
+  \label{fig:reservation-flow}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{validation-flow.png}
+  \caption{Validerings flow}
+  \label{fig:validerings-flow}
+\end{figure}
 
 \subsection{Klient/server}
 

@@ -19,11 +19,37 @@
 
 \section{Casebeskrivelse}
 
+Analog håndtering af færgebilletter kan være en omfattende opgave, da det kan skabe en flaskehals
+ved billetlugen i forbindelse med køb og udlevering af billetter. Muligheden for tilkøb er
+begrænset, da kunden skal tage stilling på stedet.
+
 \section{Problemformulering}
+
+Hvordan kan et sikkert system udvikles til håndtering af færgebilletter, som giver kunden
+mulighed for at købe billetter og overveje relevante tilkøb inden ankomst til færgen?
 
 \section{Projektplanlægning}
 
+Projektet er blevet planlagt og udarbejdet sekventielt, da der er tale om et enkeltmandsprojekt.
+Et Gantt-diagram kunne have været benyttet til planlægningen, men på baggrund af tidligere
+erfaring vurderes det ikke at give et bedre overblik over projektet. Gantt-diagrammer er mere
+velegnede, når arbejdet kan opdeles i arbejdspakker, som beskrevet i
+PRINCE2~\cite{prince2_work_package}, og planlægges over en længere periode.
+
 \subsection{Tidsplan}
+
+Projektet forløber over fire uger. Den første uge anvendes til analyse og design af systemet,
+herunder udarbejdelse af brugerhistorier, domænemodel, databasemodel og API-specifikation.
+
+I anden uge påbegyndes implementeringen af serveren og klienten. Serverens grundlæggende
+funktionalitet implementeres først, hvorefter klienten løbende integreres med API'et. Målet
+er at opnå et MVP, hvorefter delelementerne kan finpudses, hvis det oprindelige design viser
+sig ikke at opfylde et eller flere krav.
+
+I tredje uge forventes projektet at være tæt på færdigt, så resterende krav såsom test,
+sikkerhed samt hosting af klient og server kan påbegyndes.
+
+Den sidste uge anvendes udelukkende til udarbejdelse af projektets proces- og produktrapport.
 
 \section{Sprogvalg}
 
@@ -32,51 +58,122 @@ tekniske elementer såsom API-specifikationen blev skrevet på engelsk. Dette si
 sprog i kildekoden og den tekniske kontekst, da engelsk er det primære sprog inden for
 programmering.
 
+\section{Analyse og design}
+
+For at gøre implementeringen af projektet mere effektiv blev projektet indledt med udarbejdelsen
+af en række brugerhistorier, som efterfølgende blev omsat til konkrete krav. Den indledende
+analyse blev udarbejdet med udgangspunkt i en række simple spørgsmål udledt af processen
+beskrevet i~\cite{architecting_large_software_projects}.
+
+\begin{enumerate}
+\item \textbf{Hvad er formålet med et billethåndteringssystem?}
+
+Formålet er at fjerne flaskehalsen ved billetlugen ved at digitalisere køb og validering af
+billetter.
+
+\item \textbf{Hvilke undersystemer indeholder systemet?}
+
+Systemet indeholder brugerhåndtering, reservation og validering.
+
+\item \textbf{Hvad er den generaliserede betegnelse for systemet?}
+
+Et adgangsbevis.
+
+\item \textbf{Hvilke primitiver indeholder det generaliserede system?}
+
+Dokumentation for adgang.
+
+\item \textbf{Hvordan er primitiverne struktureret?}
+
+Som en liste.
+
+\end{enumerate}
+
+\subsection{Domænemodel}
+
+På baggrund af casebeskrivelsen, problemformuleringen og den ovenstående analyse kunne
+udarbejdelsen af domænemodellen påbegyndes. Processen startede med en refleksion over de
+primære elementer i en færgerejse, som dannede grundlag for den første version af
+domænemodellen. Efterfølgende blev modellen diskuteret med kollegaer, hvor vi identificerede
+manglende information og områder, der kunne specificeres tydeligere. På baggrund af denne
+feedback blev domænemodellen udvidet og finpudset, hvilket resulterede i den version, som
+projektet baserer sig på.
+
+\subsection{Datamodel}
+\label{sec:datamodel}
+
+Under implementeringen blev det tydeligt, at der manglede et abstraktionslag mellem
+domænemodellen og databasemodellen. Der blev ikke udarbejdet en selvstændig datamodel, og
+systemets datastrukturer blev derfor i høj grad baseret direkte på databasens struktur.
+
+Dette medførte en tæt kobling mellem implementeringen og databasen, hvilket gjorde ændringer
+i databasemodellen mere omfattende, da disse ofte medførte større ændringer i både serveren
+og klienten. En selvstændig datamodel kunne have reduceret denne kobling og gjort det lettere
+at designe serveren og klienten, så den underliggende databasestruktur kunne ændres uden at
+påvirke resten af systemet i samme omfang.
+
+Problemet blev særligt tydeligt i projektets tredje uge, da det blev opdaget, at designet kun
+tog højde for afgang og ikke ankomst. Det blev derfor forsøgt at generalisere afgang og
+ankomst til et fælles stop, da de grundlæggende repræsenterer samme type data. På grund af
+den tætte kobling til den eksisterende afgangsstruktur krævede denne ændring omfattende
+ændringer, særligt i klienten. Dette blev yderligere påvirket af klientens design og valget
+af teknologi, hvilket beskrives nærmere i afsnit~\ref{sec:klient}.
+
+\subsection{Databasemodel}
+
+På baggrund af domænemodellen kunne udarbejdelsen af databasemodellen påbegyndes. Dette var
+dog en mere iterativ proces, som fortsatte gennem hele projektet, da det kan være svært at
+gennemskue den optimale struktur fra begyndelsen.
+
+\subsection{Brugerflow}
+
+For at kunne udarbejde en skitse, der var retvisende, blev der udarbejdet
+brugerflows for undersystemerne reservation og validering.
+
+\subsubsection{Brugergrænseflade}
+
+For at få en forståelse af, om domænemodellen og databasemodellen var fyldestgørende, blev der
+udarbejdet en skitse af klientens brugergrænseflade i Figma, da dette var et allerede kendt
+værktøj. Resultatet var, at det blev lettere at visualisere brugerens interaktion med systemet
+og identificere eventuelle mangler i domænemodellen og databasemodellen.
+
+Hvis der havde været afsat mere tid til analyse- og designfasen, var problemet med afgang og
+ankomst, som beskrevet i afsnit~\ref{sec:datamodel}, sandsynligvis blevet identificeret
+tidligere. Både afgang og ankomst fremgår tydeligt af den udarbejdede skitse, som kan ses i
+figur~\ref{mockup-departure-day}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth]{mockup_6.png}
+  \caption{Skitse af klientens brugergrænseflade}
+  \label{mockup-departure-day}
+\end{figure}
+
 \section{Metode- og teknologivalg}
 
-\section{Udviklingsproces}
+Ved valg af teknologier til projektet blev der lagt vægt på, at teknologierne skulle være
+egnede til projektets omfang og samtidig understøtte en effektiv udviklingsproces. Da
+projektet havde en begrænset tidsramme, blev der så vidt muligt valgt teknologier, som der
+allerede var stiftet bekendtskab med. Nye teknologier blev kun valgt inden for områder,
+hvor der ikke var en tidligere erfaring, såsom webudvikling.
 
-\subsection{Analyse og design}
+\subsection{Database}
 
-\subsubsection{Domænemodel}
+Databasen benytter SQLite3, da der allerede var stiftet bekendtskab med teknologien før
+projektets begyndelse. Derudover er det muligt at kommunikere med en SQLite-database
+udelukkende ved hjælp af Pythons standardbibliotek.
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=1\textwidth]{domain-model.png}
-  \caption{Domænemodel}
-  \label{fig:domain-model}
-\end{figure}
+Et databasesystem såsom PostgreSQL kunne også have været benyttet, men grundet SQLite3's
+simplicitet blev dette vurderet som unødvendigt for projektets omfang. PostgreSQL tilbyder
+funktioner til blandt andet replikering, failover og load balancing
+\cite{postgresql_high_availability}. Disse funktioner er ikke nødvendige for projektet, men
+kan være relevante i et større produktionsmiljø.
 
-\subsubsection{Datamodel}
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=1\textwidth]{database-model.png}
-  \caption{Database model}
-  \label{fig:database-model}
-\end{figure}
-
-\subsubsection{Brugerflow}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=1\textwidth]{reservation-flow.png}
-  \caption{Reservation flow}
-  \label{fig:reservation-flow}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=1\textwidth]{validation-flow.png}
-  \caption{Validerings flow}
-  \label{fig:validerings-flow}
-\end{figure}
-
-\subsection{Database og API}
-
-\subsection{Server}
+\subsection{API}
 
 \subsection{Klient}
+\label{sec:klient}
 
 \subsection{Test og kvalitetssikring}
 
