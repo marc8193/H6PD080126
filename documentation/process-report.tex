@@ -15,7 +15,19 @@
 
 \section{Læsevejledning}
 
+Det anbefales at læse procesrapporten først. Rapporten bør dog læses i sammenhæng med
+produktrapporten for at opnå en fuld forståelse af projektets domæne og det udviklede
+produkt.
+
 \section{Indledning}
+
+Denne procesrapport beskriver de overvejelser, valg og erfaringer, der har været en del af
+projektets udviklingsproces. Rapporten skal ses i sammenhæng med produktrapporten, som
+beskriver det udviklede produkt og de tekniske løsninger.
+
+Procesrapporten fokuserer på projektets planlægning, analyse og design samt de tekniske
+valg, der blev foretaget undervejs. Derudover behandles de afgrænsninger og erfaringer, som
+har haft betydning for projektets forløb og det endelige resultat.
 
 \section{Casebeskrivelse}
 
@@ -29,6 +41,7 @@ Hvordan kan et sikkert system udvikles til håndtering af færgebilletter, som g
 mulighed for at købe billetter og overveje relevante tilkøb inden ankomst til færgen?
 
 \section{Projektplanlægning}
+\label{sec:projektplanlægning}
 
 Projektet er blevet planlagt og udarbejdet sekventielt, da der er tale om et enkeltmandsprojekt.
 Et Gantt-diagram kunne have været benyttet til planlægningen, men på baggrund af tidligere
@@ -59,6 +72,7 @@ sprog i kildekoden og den tekniske kontekst, da engelsk er det primære sprog in
 programmering.
 
 \section{Analyse og design}
+\label{sec:analyse_design}
 
 For at gøre implementeringen af projektet mere effektiv blev projektet indledt med udarbejdelsen
 af en række brugerhistorier, som efterfølgende blev omsat til konkrete krav. Den indledende
@@ -140,14 +154,50 @@ og identificere eventuelle mangler i domænemodellen og databasemodellen.
 Hvis der havde været afsat mere tid til analyse- og designfasen, var problemet med afgang og
 ankomst, som beskrevet i afsnit~\ref{sec:datamodel}, sandsynligvis blevet identificeret
 tidligere. Både afgang og ankomst fremgår tydeligt af den udarbejdede skitse, som kan ses i
-figur~\ref{mockup-departure-day}.
+figur~\ref{fig:mockup-departure-day}.
 
 \begin{figure}[ht]
   \centering
   \includegraphics[width=\textwidth]{mockup_6.png}
   \caption{Skitse af klientens brugergrænseflade}
-  \label{mockup-departure-day}
+  \label{fig:mockup-departure-day}
 \end{figure}
+
+\subsection{Arkitektur}
+
+Systemets arkitektur er opbygget lagvist, hvor hvert lag har et afgrænset ansvar og bygger
+oven på funktionaliteten i de underliggende lag. Denne opdeling blev valgt for at gøre
+systemets struktur og afhængigheder eksplicitte og dermed gøre det lettere at følge
+programmets kontrol- og dataflow.
+
+Generelle designprincipper såsom Clean og SOLID blev ikke anvendt som selvstændige mål for
+arkitekturen. Hvis et designprincip ikke kan knyttes til en konkret forbedring, bliver
+vurderingen af det i høj grad subjektiv. Denne tilgang er blandt andet inspireret af
+WARMED-principperne præsenteret af Casey Muratori~\cite{where_does_bad_code_come_from},
+hvor softwaredesign vurderes ud fra konkrete forbedringer frem for generelle
+designprincipper.
+
+Arkitektoniske valg blev derfor foretaget med udgangspunkt i projektets konkrete behov og
+prioriteringer, såsom udviklingshastighed og en simpel og overskuelig struktur.
+Abstraktioner blev tilsvarende kun introduceret, når de løste et konkret problem eller
+medførte en relevant forbedring, såsom kortere udviklingstid, hurtigere eksekvering eller
+kortere byggetid. Denne betragtning er desuden inspireret af de konsekvenser, som
+abstraktioner kan have for software, og som behandles
+i~\cite{clean_code_horrible_performance}. Tilgangen bygger desuden på refleksioner fra
+tidligere hovedforløb samt praktiske erfaringer med eksisterende systemer.
+
+\subsection{API-specifikation}
+
+API-specifikationen startede som en simpel tabel. Det viste sig dog at være udfordrende at
+holde tabellen opdateret i takt med udviklingen af API'et. Samtidig blev API-klienten Bruno
+anvendt til manuelt at verificere de enkelte endpoints, hvilket medførte, at ændringer skulle
+vedligeholdes flere steder.
+
+Specifikationen blev derfor konverteret til OpenAPI-formatet, som kunne importeres direkte i
+Bruno. Dermed kunne den samme specifikation anvendes som grundlag for både udvikling og
+verificering af API'et, hvilket gav en mere sammenhængende arbejdsgang og reducerede behovet
+for at vedligeholde den samme information flere steder. Den endelige API-specifikation
+fremgår af \texttt{documentation/openapi.yaml}.
 
 \section{Tekniske valg}
 
@@ -205,32 +255,156 @@ stiftet begrænset bekendtskab med paradigmet på et hovedforløb, men da både 
 ville medføre en ny arbejdsgang, blev dette ikke vurderet som en afgørende ulempe ved valget
 af Elm.
 
-Under udviklingen blev der observeret en ulempe ved de funktionelle principper såsom
-lambda-funktioner og rekursion. Dette kan gøre kontrolflowet sværere at følge, da det ikke
+Under udviklingen blev der observeret en ulempe ved funktionelle principper såsom
+lambda-funktioner og rekursion. Disse kan gøre kontrolflowet sværere at følge, da det ikke
 altid er tydeligt, hvor mange gange et stykke kode udføres. Et forudsigeligt kontrolflow gør
 det lettere at overskue programmets eksekvering. I~\cite{holzmann_power_of_ten} anbefales det
 blandt andet at undgå både direkte og indirekte rekursion for at øge forudsigeligheden af
-kontrolflowet.
+kontrolflowet. Da der prioriteres eksplicit og gennemskuelig kode frem for kortest mulig
+kode, vil dette fremover være et vigtigt kriterium ved vurderingen af, om det funktionelle
+paradigme er hensigtsmæssigt.
 
 \subsection{Test og kvalitetssikring}
 
+Valget af testbibliotek faldt på unittest, da der allerede var stiftet bekendtskab med
+biblioteket før projektets begyndelse. Det er desuden en del af Pythons standardbibliotek,
+hvilket betyder, at unit tests kan udarbejdes uden yderligere
+afhængigheder~\cite{unittest}. På baggrund af de allerede beskrevne kriterier blev
+unittest derfor vurderet som et passende valg til projektet.
+
+Pytest blev også overvejet, da det er et udbredt testbibliotek, som der ligeledes var
+tidligere erfaring med. Biblioteket har en pragmatisk tilgang til test og gør det muligt
+hurtigt at udarbejde tests med relativt lidt kode~\cite{pytest}. Denne tilgang indebærer
+dog en del foruddefineret funktionalitet. Det kan gøre simple tests mere kompakte, men
+kan også gøre testforløbet mindre eksplicit og vanskeligere at gennemskue, efterhånden
+som et projekt vokser. Da projektet prioriterer eksplicit og gennemskuelig kode frem for
+kortest mulig testkode, blev unittest foretrukket.
+
+Kvalitetssikringen er udelukkende udarbejdet på enhedstestniveau. I et produktionssystem
+vil det dog være relevant at supplere enhedstests med funktionelle tests og systemtests
+for at kvalitetssikre systemet på flere niveauer. Figur~\ref{fig:test_layers} viser de
+forskellige lag i et testsystem, samt hvordan afhængighederne bevæger sig udad gennem
+lagene.
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}
+    \draw (0,0) circle (3cm);
+    \draw (0,0) circle (2cm);
+    \draw (0,0) circle (1cm);
+
+    \node at (0,0) {Enhed};
+    \node at (0,1.5) {Funktionelt};
+    \node at (0,2.5) {System};
+
+    \draw[->, thick] (0,3.5) -- (3,3.5)
+      node[midway, below] {Afhængigheder};
+  \end{tikzpicture}
+  \caption{Model af de primære testlag}
+  \label{fig:test_layers}
+\end{figure}
+
 \subsection{Konfigurationsstyring}
 
-\subsection{CI/CD og hosting}
+Til konfigurationsstyring blev Git anvendt som versionsstyringssystem, mens GitHub blev
+anvendt til projektets repository. Git gjorde det muligt løbende at
+registrere ændringer i projektets kildekode og dokumentation gennem commits. Dette gav
+mulighed for at følge projektets udvikling og vende tilbage til tidligere versioner ved
+behov.
 
-% Nævn noget om CORS og XSS %
+GitHub Actions blev desuden anvendt for projektets CI, da det muliggjorde en
+simpel kobling mellem versionsstyring og CI. Den konkrete process for CI
+beskrives yderligere i afsnit~\ref{sec:ci_cd}.
+
+\subsection{CI/CD}
+\label{sec:ci_cd}
+
+Valget af CI/CD-produkt faldt på GitHub Actions, da projektet allerede anvendte GitHub til
+versionsstyring. Dette gjorde det muligt at introducere CI/CD uden yderligere infrastruktur
+eller integration mellem forskellige tjenester.
+
+CI blev konfigureret til automatisk at køre test ved ændringer i repositoryet. CD blev
+tilsvarende konfigureret til at køre test, bygge projektrapporterne og publicere dem ved
+en release. Der er dermed tale om Continuous Delivery frem for Continuous Deployment, da
+release-artefakterne publiceres automatisk, men installeres manuelt.
+
+En standard Debian Docker-container blev anvendt som miljø, hvorefter de nødvendige
+afhængigheder blev installeret ved hver kørsel. Denne løsning var hurtig at opsætte, men
+medførte unødvendig opsætningstid ved gentagne kørsler. En projektspecifik Docker-container
+med afhængighederne installeret på forhånd ville derfor være en relevant forbedring. Det
+ville samtidig gøre det muligt at anvende samme miljø lokalt og i CI. Denne optimering
+blev ikke prioriteret, da den eksisterende løsning var tilstrækkelig inden for projektets
+tidsramme.
+
+\subsection{Hosting}
+
+Valget af hosting faldt på en VPS. Løsningen var ikke den hurtigste at opsætte, men var
+simpel og gav samtidig fuld kontrol over produktionsmiljøet. Nginx blev anvendt som
+webserver for klienten og som reverse proxy for serverens API. Dermed blev både klienten
+og API'et eksponeret gennem samme origin, og CORS var derfor ikke nødvendigt. API-kald
+blev i stedet videresendt internt af Nginx til serveren.
+
+Let's Encrypt blev anvendt til at udstede et TLS-certifikat, så forbindelsen mellem
+klienten og webserveren kunne etableres sikkert gennem HTTPS. Opsætningen var simpel, da
+Let's Encrypts script automatiserede udstedelsen og konfigurationen af certifikatet.
 
 \section{Afgrænsning}
 
+Som beskrevet i afsnit~\ref{sec:analyse_design} identificerede analysen tre overordnede
+undersystemer. Projektet blev afgrænset til udelukkende at omfatte reservationssystemet. De
+øvrige undersystemer indgår derfor i analysen for at skabe en samlet forståelse af domænet,
+men blev ikke videreført til design og implementering.
+
+Sikkerhed blev tidligt afgrænset for at prioritere udviklingen af den primære funktionalitet
+inden for projektets tidsramme. Det havde været muligt at implementere enkelte simple
+sikkerhedstiltag, men disse ville kun have dækket dele af området. For at bevare en simpel
+og gennemskuelig implementering blev det derfor vurderet mere hensigtsmæssigt at foretage
+en tydelig afgrænsning frem for at introducere sikkerhedsløsninger, som ikke kunne
+udarbejdes og verificeres tilstrækkeligt. Afgrænsningen omfatter blandt andet SQL-injection,
+XSS og brugerautentifikation med adgangskoder. Disse sikkerhedsmæssige forhold og mulige
+løsninger behandles nærmere i produktrapporten.
+
+Der blev ligeledes afgrænset fra brugen af Docker-containere i produktionsmiljøet og
+etableringen af separate driftsmiljøer til eksempelvis test, staging og produktion.
+Produktet blev i stedet installeret direkte på den valgte VPS for at reducere kompleksiteten
+ved deployment og drift inden for projektets tidsramme. Mulige løsninger til en mere
+struktureret deployment- og driftsproces behandles nærmere i produktrapporten.
+
 \section{Realiseret tidsplan}
 
-\section{Evaluering}
+Den overordnede tidsplan blev fulgt, og projektets faser blev gennemført inden for de
+planlagte fire uger. Dette skal blandt andet ses i sammenhæng med tidligere erfaring med
+lignende projekter og den bevidste beslutning om at holde tidsplanen på et højere niveau.
+Som beskrevet i afsnit~\ref{sec:projektplanlægning} blev arbejdet planlagt sekventielt frem
+for at blive opdelt i detaljerede arbejdspakker. Den begrænsede detaljeringsgrad gav
+mulighed for løbende at tilpasse de enkelte aktiviteter uden at afvige fra den overordnede
+tidsplan.
 
-\subsection{Afvigelser fra projektplanen}
-
-\subsection{Erfaringer}
+At tidsplanen kunne følges understøtter samtidig beslutningen om ikke at anvende et
+Gantt-diagram. Projektets størrelse og sekventielle arbejdsform gjorde, at den yderligere
+detaljering ikke ville have bidraget med et tilsvarende bedre overblik. Erfaringen fra
+projektet peger derfor på værdien af at vælge planlægningsredskaber ud fra projektets
+kompleksitet frem for at anvende dem som et mål i sig selv.
 
 \section{Konklusion}
+
+Projektet har resulteret i et system til reservation af færgebilletter, hvor kunden kan
+vælge en afgang, oprette billetter og vælge relevante tilkøb inden ankomst til færgen.
+Projektet besvarer dermed den funktionelle del af problemformuleringen, mens
+sikkerhedsaspektet kun er delvist behandlet som følge af den foretagne afgrænsning.
+
+Udviklingsprocessen har vist, at en sekventiel og relativt enkel arbejdsform var
+hensigtsmæssig for projektets størrelse. Den indledende analyse og det løbende arbejde med
+API-specifikationen skabte et grundlag for implementeringen.
+Samtidig gjorde den begrænsede detaljeringsgrad
+i planlægningen det muligt at tilpasse designet undervejs uden at afvige fra den overordnede
+tidsplan.
+
+Projektet har desuden tydeliggjort værdien af at vælge metoder og værktøjer ud fra konkrete
+behov frem for at anvende dem som mål i sig selv. Dette kommer blandt andet til udtryk i
+fravalget af et detaljeret Gantt-diagram og begrænsningen af abstraktioner. Den valgte
+proces gjorde det muligt at udarbejde en klient, der fremstår gennemtænkt og sammenhængende,
+inden for projektets fire uger.
 
 \printbibliography[title={Referencer}]
 
@@ -326,5 +500,10 @@ automatisk kan bygges ved en Github release.
 \subsection{Dag 17 – 20/09-2026}
 
 Viderearbejdelse af procesrapporten med fokus på analyse og tekniske valg.
+
+\subsection{Dag 18 - 21/09/2026}
+
+Første udkast til procesrapporten blev færdiggjort, og arbejdet med produktrapporten blev
+påbegyndt.
 
 \end{document}
