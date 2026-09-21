@@ -113,6 +113,15 @@ manglende information og områder, der kunne specificeres tydeligere. På baggru
 feedback blev domænemodellen udvidet og finpudset, hvilket resulterede i den version, som
 projektet baserer sig på.
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{domain-model.png}
+  \caption{Domænemodel}
+  \label{fig:domain-model}
+\end{figure}
+
+\newpage
+
 \subsection{Datamodel}
 \label{sec:datamodel}
 
@@ -133,16 +142,39 @@ den tætte kobling til den eksisterende afgangsstruktur krævede denne ændring 
 ændringer, særligt i klienten. Dette blev yderligere påvirket af klientens design og valget
 af teknologi, hvilket beskrives nærmere i afsnit~\ref{sec:klient}.
 
+\newpage
+
 \subsection{Databasemodel}
 
 På baggrund af domænemodellen kunne udarbejdelsen af databasemodellen påbegyndes. Dette var
 dog en mere iterativ proces, som fortsatte gennem hele projektet, da det kan være svært at
 gennemskue den optimale struktur fra begyndelsen.
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{database-model.png}
+  \caption{Database model}
+  \label{fig:database-model}
+\end{figure}
+
 \subsection{Brugerflow}
 
 For at kunne udarbejde en skitse, der var retvisende, blev der udarbejdet
 brugerflows for undersystemerne reservation og validering.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{reservation-flow.png}
+  \caption{Reservation flow}
+  \label{fig:reservation-flow}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{validation-flow.png}
+  \caption{Validerings flow}
+  \label{fig:validerings-flow}
+\end{figure}
 
 \subsubsection{Brugergrænseflade}
 
@@ -208,33 +240,6 @@ med. Derudover ligger den primære ekspertise i Python og C, hvilket også spill
 Nye værktøjer blev primært valgt inden for områder, hvor der ikke var tidligere erfaring,
 såsom webudvikling.
 
-\subsection{Database}
-
-Valget af database faldt på SQLite3, da der allerede var stiftet bekendtskab med produktet før
-projektets begyndelse. Derudover er det muligt at kommunikere med en SQLite-database
-udelukkende ved hjælp af Pythons standardbibliotek. På baggrund af de allerede beskrevne
-kriterier blev SQLite3 derfor vurderet som et passende valg til projektet.
-
-Et databasesystem såsom PostgreSQL kunne også have været benyttet, men grundet
-SQLite-databasens simplicitet blev dette vurderet som unødvendigt for projektets omfang.
-PostgreSQL tilbyder funktioner til blandt andet replikering, failover og load balancing
-\cite{postgresql_high_availability}. Disse funktioner er ikke nødvendige for projektet, men
-kan være relevante i et større produktionsmiljø.
-
-\subsection{API}
-
-API'et benytter biblioteket Flask, da det er designet med fokus på simplicitet og gør det
-muligt hurtigt at komme i gang med udviklingen. Flask kræver kun en begrænset mængde
-opsætning for at etablere et simpelt og fungerende REST-API, samtidig med at funktionaliteten
-kan udvides efter behov. Dette passede godt til projektets begrænsede omfang og tidsramme
-samt den begrænsede tidligere erfaring med webudvikling og REST. Det gjorde det muligt at
-fokusere udviklingstiden på selve API'ets funktionalitet frem for opsætning og konfiguration.
-
-Django kunne alternativt have været benyttet og tilbyder blandt andet en indbygget ORM, som
-kan være en fordel i større projekter. Til projektets begrænsede omfang blev Flasks
-simplicitet dog vægtet højere end den ekstra funktionalitet, som Django tilbyder, da
-projektet kun indeholder et begrænset antal databaseforespørgsler.
-
 \subsection{Klient}
 \label{sec:klient}
 
@@ -263,6 +268,45 @@ blandt andet at undgå både direkte og indirekte rekursion for at øge forudsig
 kontrolflowet. Da der prioriteres eksplicit og gennemskuelig kode frem for kortest mulig
 kode, vil dette fremover være et vigtigt kriterium ved vurderingen af, om det funktionelle
 paradigme er hensigtsmæssigt.
+
+\subsection{API}
+
+API'et benytter biblioteket Flask, da det er designet med fokus på simplicitet og gør det
+muligt hurtigt at komme i gang med udviklingen. Flask kræver kun en begrænset mængde
+opsætning for at etablere et simpelt og fungerende REST-API, samtidig med at funktionaliteten
+kan udvides efter behov. Dette passede godt til projektets begrænsede omfang og tidsramme
+samt den begrænsede tidligere erfaring med webudvikling og REST. Det gjorde det muligt at
+fokusere udviklingstiden på selve API'ets funktionalitet frem for opsætning og konfiguration.
+
+Django kunne alternativt have været benyttet og tilbyder blandt andet en indbygget ORM, som
+kan være en fordel i større projekter. Til projektets begrænsede omfang blev Flasks
+simplicitet dog vægtet højere end den ekstra funktionalitet, som Django tilbyder, da
+projektet kun indeholder et begrænset antal databaseforespørgsler.
+
+\subsection{Server}
+
+Valget af server faldt på en VPS. Løsningen var ikke den hurtigste at opsætte, men var
+simpel og gav samtidig fuld kontrol over produktionsmiljøet. Nginx blev anvendt som
+webserver for klienten og som reverse proxy for serverens API. Dermed blev både klienten
+og API'et eksponeret gennem samme origin, og CORS var derfor ikke nødvendigt. API-kald
+blev i stedet videresendt internt af Nginx til serveren.
+
+Let's Encrypt blev anvendt til at udstede et TLS-certifikat, så forbindelsen mellem
+klienten og webserveren kunne etableres sikkert gennem HTTPS. Opsætningen var simpel, da
+Let's Encrypts script automatiserede udstedelsen og konfigurationen af certifikatet.
+
+\subsection{Database}
+
+Valget af database faldt på SQLite3, da der allerede var stiftet bekendtskab med produktet før
+projektets begyndelse. Derudover er det muligt at kommunikere med en SQLite-database
+udelukkende ved hjælp af Pythons standardbibliotek. På baggrund af de allerede beskrevne
+kriterier blev SQLite3 derfor vurderet som et passende valg til projektet.
+
+Et databasesystem såsom PostgreSQL kunne også have været benyttet, men grundet
+SQLite-databasens simplicitet blev dette vurderet som unødvendigt for projektets omfang.
+PostgreSQL tilbyder funktioner til blandt andet replikering, failover og load balancing
+\cite{postgresql_high_availability}. Disse funktioner er ikke nødvendige for projektet, men
+kan være relevante i et større produktionsmiljø.
 
 \subsection{Test og kvalitetssikring}
 
@@ -335,18 +379,6 @@ med afhængighederne installeret på forhånd ville derfor være en relevant for
 ville samtidig gøre det muligt at anvende samme miljø lokalt og i CI. Denne optimering
 blev ikke prioriteret, da den eksisterende løsning var tilstrækkelig inden for projektets
 tidsramme.
-
-\subsection{Hosting}
-
-Valget af hosting faldt på en VPS. Løsningen var ikke den hurtigste at opsætte, men var
-simpel og gav samtidig fuld kontrol over produktionsmiljøet. Nginx blev anvendt som
-webserver for klienten og som reverse proxy for serverens API. Dermed blev både klienten
-og API'et eksponeret gennem samme origin, og CORS var derfor ikke nødvendigt. API-kald
-blev i stedet videresendt internt af Nginx til serveren.
-
-Let's Encrypt blev anvendt til at udstede et TLS-certifikat, så forbindelsen mellem
-klienten og webserveren kunne etableres sikkert gennem HTTPS. Opsætningen var simpel, da
-Let's Encrypts script automatiserede udstedelsen og konfigurationen af certifikatet.
 
 \section{Afgrænsning}
 
