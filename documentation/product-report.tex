@@ -41,63 +41,158 @@ digitalt. Rejsekortet er et eksempel på denne udvikling, hvor flere billettyper
 af det samme system, og valideringen kan udføres ved at scanne kortet eller QR-koden i appen
 ~\cite{wikipedia_Rejsekort}.
 
-\section{Produktbeskrivelse}
-
 \section{Kravspecifikation}
 
-% Indsæt brugerhistorienerne og udarbejd en tabel som giver et mere konkret billed. %
+Formålet med kravspecifikationen er at konkretisere brugerhistorierne til funktionelle krav,
+som efterfølgende kan verificeres gennem konkrete acceptkriterier.
 
-\section{Arkitektur}
+\subsection{Brugerhistorier}
 
-\subsubsection{Domænemodel}
+\begin{enumerate}
+\item Som kunde ønsker jeg at kunne købe billetter inden ankomst, så jeg undgår kø ved
+billetlugen.
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=1\textwidth]{domain-model.png}
-  \caption{Domænemodel}
-  \label{fig:domain-model}
-\end{figure}
+\item Som kunde ønsker jeg at kunne betale online, så købet kan gennemføres hjemmefra.
 
-\subsubsection{Datamodel}
+\item Som kunde ønsker jeg at modtage mine billetter digitalt, så jeg nemt kan fremvise dem
+ved ankomst.
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=1\textwidth]{database-model.png}
-  \caption{Database model}
-  \label{fig:database-model}
-\end{figure}
+\item Som kunde ønsker jeg at blive notificeret ved aflysninger eller ændringer i
+afgangstidspunktet.
 
-\subsubsection{Brugerflow}
+\item Som operatør ønsker jeg at kunne oprette og administrere afgange, så kunderne kan købe
+billetter til dem.
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=1\textwidth]{reservation-flow.png}
-  \caption{Reservation flow}
-  \label{fig:reservation-flow}
-\end{figure}
+\item Som operatør ønsker jeg at kunne administrere færger og deres kapacitet, så der ikke
+sælges flere billetter, end færgen kan håndtere.
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=1\textwidth]{validation-flow.png}
-  \caption{Validerings flow}
-  \label{fig:validerings-flow}
-\end{figure}
+\item Som operatør ønsker jeg at kunne validere billetter, så jeg kan kontrollere dem ved
+kundens ankomst.
+\end{enumerate}
 
-\subsection{Klient/server}
+\subsection{Funktionalitet}
+
+Nedenstående tabel konkretiserer brugerhistorierne til funktionelle krav. Prioriteringen
+består af to niveauer, hvor 1 angiver need-to-have og 2 angiver nice-to-have.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|p{9cm}|c|}
+\hline
+\textbf{Krav} & \textbf{Beskrivelse} & \textbf{Prioritet} \\
+\hline
+K1 & Kunden skal kunne vælge en afgang og købe en eller flere billetter. & 1 \\
+\hline
+K2 & Kunden skal kunne betale for de valgte billetter online. & 1 \\
+\hline
+K3 & Kunden skal kunne modtage og fremvise købte billetter digitalt. & 2 \\
+\hline
+K4 & Kunden skal kunne notificeres ved aflysning eller ændring af en afgang. & 2 \\
+\hline
+K5 & Operatøren skal kunne oprette og administrere afgange. & 1 \\
+\hline
+K6 & Operatøren skal kunne administrere færger og deres kapacitet. & 1 \\
+\hline
+K7 & Systemet skal forhindre salg af billetter ud over færgens kapacitet. & 1 \\
+\hline
+K8 & Operatøren skal kunne validere en kundes billet. & 1 \\
+\hline
+\end{tabular}
+\caption{Funktionelle krav baseret på brugerhistorier}
+\label{tab:krav}
+\end{table}
+
+\subsection{Acceptkriterier}
+
+Nedenstående tabel beskriver de kriterier, der skal være opfyldt, for at de funktionelle
+krav kan betragtes som opfyldt.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|p{9cm}|c|}
+\hline
+\textbf{Krav} & \textbf{Acceptkriterium} & \textbf{Prioritet} \\
+\hline
+K1 & Kunden kan vælge en tilgængelig afgang, oprette mindst én billet og gennemføre
+reservationen. & 1 \\
+\hline
+K2 & Kunden kan gennemføre betaling for de valgte billetter online. & 1 \\
+\hline
+K3 & En købt billet er tilgængelig digitalt og kan fremvises efter købet. & 2 \\
+\hline
+K4 & Kunden notificeres, hvis en reserveret afgang aflyses eller får ændret
+afgangstidspunkt. & 2 \\
+\hline
+K5 & Operatøren kan oprette en afgang og efterfølgende ændre dens oplysninger. & 1 \\
+\hline
+K6 & Operatøren kan oprette en færge og angive eller ændre dens kapacitet. & 1 \\
+\hline
+K7 & Systemet afviser køb, hvis købet medfører, at færgens kapacitet overskrides. & 1 \\
+\hline
+K8 & Operatøren kan kontrollere, om en fremvist billet er gyldig. & 1 \\
+\hline
+\end{tabular}
+\caption{Acceptkriterier baseret på funktionelle krav}
+\label{tab:acceptkriterier}
+\end{table}
+
+
+\section{Teknologi beskrivelse}
+
+\subsection{Klient}
+
+Klienten er udviklet i Elm, som er et funktionelt programmeringssprog til udvikling af
+webapplikationer. Elm-kildekode kompileres til JavaScript, som efterfølgende afvikles i
+brugerens browser. Klienten står for præsentationen af systemets data samt brugerens
+interaktion med reservationssystemet og kommunikerer med API'et gennem HTTP.
 
 \subsection{API}
 
+API'et er udviklet med Flask, som er et webframework til Python. Flask håndterer
+HTTP-forespørgsler fra klienten og eksponerer systemets funktionalitet gennem et REST API.
+API'et fungerer som grænseflade mellem klienten og systemets data og står for behandling af
+forespørgsler samt læsning og ændring af data i databasen.
+
+\subsection{Server}
+
+Nginx anvendes som webserver og reverse proxy. Webserveren leverer den kompilerede
+Elm-klient til browseren, mens forespørgsler til API'et videresendes til Flask-serveren.
+Dermed eksponeres klienten og API'et gennem samme webserver og origin. Nginx håndterer
+desuden HTTPS-forbindelsen til klienten.
+
 \subsection{Database}
 
-\section{Anvendte teknologier}
+SQLite3 anvendes som relationel database til persistent lagring af systemets data.
+Databasen gemmes i en enkelt fil og tilgås direkte fra Python-serveren gennem SQLite3.
+Datamodellen består af relationelle tabeller, som blandt andet repræsenterer brugere,
+færger, afgange og billetter.
 
-\section{Sikkerhed}
+\subsection{Sikkerhed}
 
-\section{Test og kvalitetssikring}
+Let's Encrypt anvendes til at udstede TLS-certifikatet til webserveren. Let's Encrypt er en
+certifikatudsteder, der tilbyder automatiseret udstedelse og fornyelse af TLS-certifikater.
+Certifikatet gør det muligt at anvende HTTPS, så kommunikationen mellem klienten og
+webserveren krypteres.
 
-\section{Konfigurationsstyring}
+\subsection{Test}
 
-\section{CI/CD}
+Til enhedstest anvendes Pythons standardbibliotek unittest~\cite{unittest}.
+Biblioteket indeholder funktionalitet til at definere og
+strukturere testcases samt kontrollere forventede resultater gennem assertions. Testene kan
+dermed afvikles direkte med Python uden yderligere testafhængigheder.
+
+\subsection{Konfigurationsstyring}
+
+GitHub anvendes til central opbevaring af projektets Git-repository. Platformen indeholder
+projektets kildekode og versionshistorik og fungerer samtidig som udgangspunkt for
+projektets CI/CD.
+
+\subsection{CI/CD}
+
+GitHub Actions anvendes til projektets CI/CD. GitHub Actions gør det muligt at definere
+automatiserede workflows, som køres på baggrund af hændelser i projektets repository. I
+projektet anvendes disse workflows til automatisk at køre tests samt bygge og publicere
+projektets rapporter.
 
 \section{Installation og opsætning}
 
