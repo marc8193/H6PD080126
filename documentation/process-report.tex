@@ -16,14 +16,14 @@
 \section{Læsevejledning}
 
 Det anbefales at læse procesrapporten først. Rapporten bør dog læses i sammenhæng med
-produktrapporten for at opnå en fuld forståelse af projektets domæne og det udviklede
+produktrapporten for at opnå en fuld forståelse af projektets domæne og det udarbejdede
 produkt.
 
 \section{Indledning}
 
 Denne procesrapport beskriver de overvejelser, valg og erfaringer, der har været en del af
 projektets udviklingsproces. Rapporten skal ses i sammenhæng med produktrapporten, som
-beskriver det udviklede produkt og de tekniske løsninger.
+beskriver det udarbejdede produkt og de tekniske løsninger.
 
 Procesrapporten fokuserer på projektets planlægning, analyse og design samt de tekniske
 valg, der blev foretaget undervejs. Derudover behandles de afgrænsninger og erfaringer, som
@@ -74,10 +74,63 @@ programmering.
 \section{Analyse og design}
 \label{sec:analyse_design}
 
-For at gøre implementeringen af projektet mere effektiv blev projektet indledt med udarbejdelsen
-af en række brugerhistorier, som efterfølgende blev omsat til konkrete krav. Den indledende
-analyse blev udarbejdet med udgangspunkt i en række simple spørgsmål udledt af processen
-beskrevet i~\cite{architecting_large_software_projects}.
+For at gøre implementeringen af projektet mere effektiv blev projektet indledt med
+udarbejdelsen af en række brugerhistorier, som efterfølgende blev omsat til konkrete krav.
+Brugerhistorierne dannede samtidig udgangspunkt for den indledende analyse af systemets
+domæne.
+
+På baggrund af brugerhistorierne blev navneord og udsagnsord identificeret.
+Formålet med dette var at skabe et indledende overblik over de begreber og handlinger, som
+indgår i problemområdet, og dermed danne et grundlag for den videre udarbejdelse af projektet.
+
+Navneordene repræsenterer potentielle entiteter, egenskaber eller øvrige begreber i domænet,
+mens udsagnsordene beskriver de handlinger og relationer, der forekommer mellem disse. Det er
+ikke nødvendigvis alle identificerede ord, der direkte skal repræsenteres i den endelige model.
+Analysen blev derfor anvendt som udgangspunkt for at vurdere, hvilke begreber der var
+relevante for systemets design. Samtidig bidrog analysen til et ensartet ordvalg gennem hele
+projektet, fra de indledende modeller til den konkrete implementering.
+
+\newpage
+
+\subsubsection*{Navneord}
+
+\begin{itemize}
+\item Kunde
+\item Billet
+\item Ankomst
+\item Kø
+\item Billetluge
+\item Køb
+\item Afgang
+\item Afgangstidspunkt
+\item Operatør
+\item Færge
+\item Kapacitet
+\end{itemize}
+
+\subsubsection*{Udsagnsord}
+
+\begin{itemize}
+\item Købe
+\item Undgå
+\item Betale
+\item Gennemføre
+\item Modtage
+\item Fremvise
+\item Notificere
+\item Oprette
+\item Administrere
+\item Sælge
+\item Håndtere
+\item Validere
+\item Kontrollere
+\end{itemize}
+
+\newpage
+
+Efter ordanalysen blev problemområdet undersøgt på et mere overordnet niveau. Med udgangspunkt
+i processen beskrevet i~\cite{architecting_large_software_projects} blev der opstillet en række
+simple spørgsmål med henblik på at identificere systemets grundlæggende formål og struktur.
 
 \begin{enumerate}
 \item \textbf{Hvad er formålet med et billethåndteringssystem?}
@@ -91,17 +144,22 @@ Systemet indeholder brugerhåndtering, reservation og validering.
 
 \item \textbf{Hvad er den generaliserede betegnelse for systemet?}
 
-Et adgangsbevis.
+Et system til håndtering af billetter. En billet knyttes til en bruger og giver
+brugeren ret til at benytte en bestemt afgang. Reservation omfatter oprettelsen af billetten,
+mens validering anvendes til at kontrollere den.
 
 \item \textbf{Hvilke primitiver indeholder det generaliserede system?}
 
-Dokumentation for adgang.
+Det centrale primitiv i systemet er billetten, som knytter en bruger til en bestemt afgang.
 
 \item \textbf{Hvordan er primitiverne struktureret?}
 
-Som en liste.
+Billetterne er struktureret som en samling, hvor hver billet knytter en bruger til en bestemt
+afgang.
 
 \end{enumerate}
+
+\newpage
 
 \subsection{Domænemodel}
 
@@ -324,11 +382,11 @@ kan også gøre testforløbet mindre eksplicit og vanskeligere at gennemskue, ef
 som et projekt vokser. Da projektet prioriterer eksplicit og gennemskuelig kode frem for
 kortest mulig testkode, blev unittest foretrukket.
 
-Kvalitetssikringen er udelukkende udarbejdet på enhedstestniveau. I et produktionssystem
-vil det dog være relevant at supplere enhedstests med funktionelle tests og systemtests
-for at kvalitetssikre systemet på flere niveauer. Figur~\ref{fig:test_layers} viser de
-forskellige lag i et testsystem, samt hvordan afhængighederne bevæger sig udad gennem
-lagene.
+Kvalitetssikringen er udelukkende udarbejdet på enhedstestniveau, også betegnet i daglig tale
+som unit tests. I et produktionssystem vil det dog være relevant at supplere enhedstests med
+funktionelle tests og systemtests for at kvalitetssikre systemet på flere niveauer.
+Figur~\ref{fig:test_layers} viser de forskellige lag i et testsystem, samt hvordan
+afhængighederne bevæger sig udad gennem lagene.
 
 \begin{figure}[ht]
   \centering
@@ -338,7 +396,7 @@ lagene.
     \draw (0,0) circle (1cm);
 
     \node at (0,0) {Enhed};
-    \node at (0,1.5) {Funktionelt};
+    \node at (0,1.5) {Funktionel};
     \node at (0,2.5) {System};
 
     \draw[->, thick] (0,3.5) -- (3,3.5)
@@ -348,9 +406,9 @@ lagene.
   \label{fig:test_layers}
 \end{figure}
 
-\subsection{Konfigurationsstyring}
+\subsection{Versionsstyring}
 
-Til konfigurationsstyring blev Git anvendt som versionsstyringssystem, mens GitHub blev
+Til versionsstyring blev Git anvendt som versionsstyringssystem, mens GitHub blev
 anvendt til projektets repository. Git gjorde det muligt løbende at
 registrere ændringer i projektets kildekode og dokumentation gennem commits. Dette gav
 mulighed for at følge projektets udvikling og vende tilbage til tidligere versioner ved
