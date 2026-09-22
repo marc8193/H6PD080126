@@ -1,0 +1,19 @@
+@startuml
+skinparam dpi 400
+
+!include <C4/C4_Container>
+
+Person(user, "Bruger")
+
+System_Boundary(system, "Billethåndteringssystem") {
+  Container(frontend, "Klient", "Elm / Browser", "Viser brugergrænsefladen")
+  Container(backend, "Server", "Python / Flask", "Udbyder API og håndterer forretningslogik")
+  ContainerDb(database, "Database", "SQLite", "Gemmer systemets data")
+}
+
+Rel(user, frontend, "Benytter")
+
+Rel(frontend, backend, "Kommunikerer med", "HTTP / REST")
+Rel(backend, database, "Læser og skriver", "SQL")
+
+@enduml

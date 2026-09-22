@@ -21,7 +21,7 @@ Gennem historien har der været benyttet mange forskellige billethåndteringssys
 udviklingen kan overordnet inddeles i tre primære faser: den manuelle, den mekaniske og den
 digitale.
 
-Manuel bogføring var udgangspunktet for billethåndtering, hvor en medarbejder manuelt
+Manuel registrering var udgangspunktet for billethåndtering, hvor en medarbejder manuelt
 registrerede de enkelte billetter. Senere blev der udviklet papirbaserede systemer, som gjorde
 det muligt at standardisere udstedelsen og kontrollen af billetter.
 
@@ -102,6 +102,8 @@ K8 & Operatøren skal kunne validere en kundes billet. & 1 \\
 \label{tab:krav}
 \end{table}
 
+\newpage
+
 \subsection{Acceptkriterier}
 
 Nedenstående tabel beskriver de kriterier, der skal være opfyldt, for at de funktionelle
@@ -136,6 +138,82 @@ K8 & Operatøren kan kontrollere, om en fremvist billet er gyldig. & 1 \\
 \label{tab:acceptkriterier}
 \end{table}
 
+\newpage
+
+\section{Arkitektur}
+
+\subsection{System}
+
+Systemarkitekturen er illustreret i figur~\ref{fig:system_architecture} med udgangspunkt i
+C4-modellen~\cite{c4_model}. C4-modellen beskriver softwarearkitektur gennem forskellige
+abstraktionsniveauer, herunder systemkontekst, containere, komponenter og kode.
+
+Figuren tager udgangspunkt i C4-modellens containerdiagram og viser systemets overordnede
+opdeling, de anvendte teknologier samt kommunikationen mellem de enkelte dele. Systemet
+består af en Elm-baseret klient, en Python-baseret server og en SQLite-database.
+
+\section{Brugergrænseflade}
+
+Brugergrænsefladen er udarbejdet med et ensartet visuelt udtryk på tværs af klienten.
+Designet tager udgangspunkt i en fast typografisk skala og et begrænset farvetema.
+
+\subsection{Design}
+
+\subsubsection{Typografi}
+
+Brugergrænsefladen anvender skrifttypen Alyamama med en grundstørrelse på 16~px.
+Skriftstørrelserne følger en Major Third-skala med en faktor på 1,250. Den almindelige
+skriftvægt er 400, og linjehøjden er 1,6.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|l|l|}
+    \hline
+    \textbf{Type} & \textbf{Størrelse} \\
+    \hline
+    h1 & \texttt{3.815rem} \\
+    h2 & \texttt{3.052rem} \\
+    h3 & \texttt{2.441rem} \\
+    h4 & \texttt{1.953rem} \\
+    h5 & \texttt{1.563rem} \\
+    h6 & \texttt{1.25rem} \\
+    p & \texttt{1rem} \\
+    small & \texttt{0.8rem} \\
+    x-small & \texttt{0.64rem} \\
+    \hline
+  \end{tabular}
+  \caption{Typografisk skala}
+  \label{tab:typography}
+\end{table}
+
+\newpage
+
+\subsubsection{Farvetema}
+
+Brugergrænsefladen anvender et begrænset farvetema, som består af en tekstfarve,
+baggrundsfarve samt primære, sekundære og accentfarver.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|l|l|p{7cm}|}
+    \hline
+    \textbf{Type} & \textbf{Farve} & \textbf{Beskrivelse} \\
+    \hline
+    Tekst & \texttt{\#292929} & Meget mørk grå, næsten sort \\
+    Baggrund & \texttt{\#f7f7f7} & Meget lys grå, næsten hvid \\
+    Primær & \texttt{\#063b74} & Dyb, mørk marineblå \\
+    Sekundær & \texttt{\#d9d9d9} & Lys neutral grå \\
+    Accent & \texttt{\#b0c4de} & Lys, afdæmpet stålblå \\
+    \hline
+  \end{tabular}
+  \caption{Brugergrænsefladens farvetema}
+  \label{tab:color_theme}
+\end{table}
+
+\subsection{Skitser}
+
+Skitserne i figur~\ref{fig:ui_mockups} viser den planlagte opbygning af klientens centrale
+visninger og danner grundlag for den efterfølgende implementering.
 
 \section{Teknologi beskrivelse}
 
@@ -198,16 +276,83 @@ projektets rapporter.
 
 \subsection{Forudsætninger}
 
+For at bygge og køre systemet kræves et Linux-baseret operativsystem samt følgende software:
+
+\begin{itemize}
+  \item Python~\cite{python}
+  \item Flask~\cite{flask}
+  \item Elm~\cite{elm}
+\end{itemize}
+
 \subsection{Bygning}
 
-\subsection{Konfiguration}
+Systemet bygges ved hjælp af scriptet \texttt{build.sh}. Scriptet køres med argumentet
+\texttt{docs}, \texttt{client} eller \texttt{test}, afhængigt af hvilken del af systemet der
+ønskes bygget eller testet.
 
-\subsection{Hosting}
+\begin{verbatim}
+$ ./build.sh docs    # Bygger dokumentationen
+$ ./build.sh client  # Bygger klienten
+$ ./build.sh test    # Kører tests
+$ ./build.sh all     # Bygger alle dele
+$ ./build.sh         # Bygger alle dele
+\end{verbatim}
 
-\section{Brugervejledning}
+\subsection{Brugervejledning}
+
+Klienten skal serveres via en HTTP-server. Til dette kan eksempelvis Pythons indbyggede
+HTTP-server, Nginx eller en tilsvarende webserver anvendes.
+
+Serveren startes ved at køre \texttt{source/server.py} som et almindeligt Python-program.
 
 \section{Kendte begrænsninger}
 
+Af de identificerede undersystemer er det udelukkende reservationssystemet, der er
+implementeret. De øvrige undersystemer, herunder betaling og validering, indgår derfor ikke
+i det reelle produkt.
+
+Flere brugere kan købe billetter samtidigt. Da der ikke anvendes låsning ved reservation, og
+billetterne skrives direkte til databasen, kan samtidige reservationer medføre, at en afgang
+bliver overreserveret.
+
 \printbibliography[title={Referencer}]
+
+\appendix
+
+\section{Systemarkitektur}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\textwidth]{system-architecture.png}
+  \caption{Systemarkitekturen}
+  \label{fig:system_architecture}
+\end{figure}
+
+\section{Skitser af brugergrænsefladen}
+
+\begin{center}
+  \includegraphics[width=\textwidth]{mockup_1.png}
+
+  \vspace{0.5cm}
+  \includegraphics[width=\textwidth]{mockup_2.png}
+
+  \vspace{0.5cm}
+  \includegraphics[width=\textwidth]{mockup_3.png}
+
+  \vspace{0.5cm}
+  \includegraphics[width=\textwidth]{mockup_4.png}
+
+  \vspace{0.5cm}
+  \includegraphics[width=\textwidth]{mockup_5.png}
+
+  \vspace{0.5cm}
+  \includegraphics[width=\textwidth]{mockup_6.png}
+
+  \vspace{0.5cm}
+  \includegraphics[width=\textwidth]{mockup_7.png}
+
+  \captionof{figure}{Skitser af brugergrænsefladen}
+  \label{fig:ui_mockups}
+\end{center}
 
 \end{document}
