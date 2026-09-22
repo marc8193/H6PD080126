@@ -15,6 +15,10 @@
 
 \section{Læsevejledning}
 
+Produktrapporten bør læses i sammenhæng med procesrapporten, som beskriver de overvejelser
+og valg, der ligger til grund for det udarbejdede produkt. Det anbefales derfor at læse
+procesrapporten først.
+
 \section{Introduktion}
 
 Gennem historien har der været benyttet mange forskellige billethåndteringssystemer, men
@@ -81,21 +85,31 @@ består af to niveauer, hvor 1 angiver need-to-have og 2 angiver nice-to-have.
 \hline
 \textbf{Krav} & \textbf{Beskrivelse} & \textbf{Prioritet} \\
 \hline
-K1 & Kunden skal kunne vælge en afgang og købe en eller flere billetter. & 1 \\
+K1 & Kunden skal kunne vælge en afgang. & 1 \\
 \hline
-K2 & Kunden skal kunne betale for de valgte billetter online. & 1 \\
+K2 & Kunden skal kunne købe en eller flere billetter. & 1 \\
 \hline
-K3 & Kunden skal kunne modtage og fremvise købte billetter digitalt. & 2 \\
+K3 & Kunden skal kunne betale for de valgte billetter online. & 1 \\
 \hline
-K4 & Kunden skal kunne notificeres ved aflysning eller ændring af en afgang. & 2 \\
+K4 & Kunden skal kunne modtage købte billetter digitalt. & 2 \\
 \hline
-K5 & Operatøren skal kunne oprette og administrere afgange. & 1 \\
+K5 & Kunden skal kunne fremvise købte billetter digitalt. & 2 \\
 \hline
-K6 & Operatøren skal kunne administrere færger og deres kapacitet. & 1 \\
+K6 & Kunden skal kunne notificeres ved aflysning af en afgang. & 2 \\
 \hline
-K7 & Systemet skal forhindre salg af billetter ud over færgens kapacitet. & 1 \\
+K7 & Kunden skal kunne notificeres ved ændring af en afgang. & 2 \\
 \hline
-K8 & Operatøren skal kunne validere en kundes billet. & 1 \\
+K8 & Operatøren skal kunne oprette afgange. & 1 \\
+\hline
+K9 & Operatøren skal kunne administrere afgange. & 1 \\
+\hline
+K10 & Operatøren skal kunne administrere færger. & 1 \\
+\hline
+K11 & Operatøren skal kunne administrere færgers kapacitet. & 1 \\
+\hline
+K12 & Systemet skal forhindre salg af billetter ud over færgens kapacitet. & 1 \\
+\hline
+K13 & Operatøren skal kunne validere en kundes billet. & 1 \\
 \hline
 \end{tabular}
 \caption{Funktionelle krav baseret på brugerhistorier}
@@ -115,23 +129,31 @@ krav kan betragtes som opfyldt.
 \hline
 \textbf{Krav} & \textbf{Acceptkriterium} & \textbf{Prioritet} \\
 \hline
-K1 & Kunden kan vælge en tilgængelig afgang, oprette mindst én billet og gennemføre
-reservationen. & 1 \\
+K1 & Kunden kan vælge en tilgængelig afgang. & 1 \\
 \hline
-K2 & Kunden kan gennemføre betaling for de valgte billetter online. & 1 \\
+K2 & Kunden kan oprette mindst én billet og gennemføre reservationen. & 1 \\
 \hline
-K3 & En købt billet er tilgængelig digitalt og kan fremvises efter købet. & 2 \\
+K3 & Kunden kan gennemføre betaling for de valgte billetter online. & 1 \\
 \hline
-K4 & Kunden notificeres, hvis en reserveret afgang aflyses eller får ændret
-afgangstidspunkt. & 2 \\
+K4 & En købt billet er tilgængelig digitalt efter købet. & 2 \\
 \hline
-K5 & Operatøren kan oprette en afgang og efterfølgende ændre dens oplysninger. & 1 \\
+K5 & Kunden kan fremvise en købt billet digitalt. & 2 \\
 \hline
-K6 & Operatøren kan oprette en færge og angive eller ændre dens kapacitet. & 1 \\
+K6 & Kunden notificeres, hvis en reserveret afgang aflyses. & 2 \\
 \hline
-K7 & Systemet afviser køb, hvis købet medfører, at færgens kapacitet overskrides. & 1 \\
+K7 & Kunden notificeres, hvis en reserveret afgang ændres. & 2 \\
 \hline
-K8 & Operatøren kan kontrollere, om en fremvist billet er gyldig. & 1 \\
+K8 & Operatøren kan oprette en afgang. & 1 \\
+\hline
+K9 & Operatøren kan ændre oplysningerne for en eksisterende afgang. & 1 \\
+\hline
+K10 & Operatøren kan administrere færger. & 1 \\
+\hline
+K11 & Operatøren kan angive eller ændre en færges kapacitet. & 1 \\
+\hline
+K12 & Systemet afviser køb, hvis købet medfører, at færgens kapacitet overskrides. & 1 \\
+\hline
+K13 & Operatøren kan kontrollere, om en fremvist billet er gyldig. & 1 \\
 \hline
 \end{tabular}
 \caption{Acceptkriterier baseret på funktionelle krav}
@@ -151,6 +173,18 @@ abstraktionsniveauer, herunder systemkontekst, containere, komponenter og kode.
 Figuren tager udgangspunkt i C4-modellens containerdiagram og viser systemets overordnede
 opdeling, de anvendte teknologier samt kommunikationen mellem de enkelte dele. Systemet
 består af en Elm-baseret klient, en Python-baseret server og en SQLite-database.
+
+\subsection{Klient}
+
+% Udarbejd diagram som viser arkitekturen af klienten
+
+\subsection{Server}
+
+% Udarbejd diagram som viser arkitekturen af serveren
+
+\subsection{Deployment- og drift}
+
+% Udarbejd diagram som viser hvordan deployment- og drift kunne se ud
 
 \section{Brugergrænseflade}
 
@@ -281,6 +315,7 @@ For at bygge og køre systemet kræves et Linux-baseret operativsystem samt føl
 \begin{itemize}
   \item Python~\cite{python}
   \item Flask~\cite{flask}
+  \item Flask-CORS~\cite{flask_cors}
   \item Elm~\cite{elm}
 \end{itemize}
 
