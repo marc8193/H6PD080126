@@ -262,9 +262,6 @@ def patch_ferries():
   if id is None:
     return jsonify(message="Missing or invalid id"), 400
 
-  if name is None:
-    return jsonify(message="Missing or invalid name"), 400
-
   connection = get_connection()
 
   try:
