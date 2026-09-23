@@ -1,0 +1,29 @@
+@startuml
+skinparam dpi 300
+
+!include <C4/C4_Component>
+
+Person(user, "Bruger")
+
+Container_Boundary(browser, "Browser") {
+  Component(dom, "DOM", "HTML", "Browserens Document Object Model")
+
+  Container_Boundary(elm, "Klient") {
+    Component(update, "Update", "Elm", "Behandler beskeder")
+    Component(model, "Model", "Elm", "Applikationens tilstand")
+    Component(view, "View", "Elm", "Danner HTML")
+  }
+}
+
+Container(server, "Server", "Python/Flask", "Serverapplikation")
+
+Rel(user, dom, "Interagerer med")
+Rel(dom, update, "Sender", "Msg")
+Rel(update, model, "Opdaterer")
+Rel(model, view, "Anvendes af")
+Rel(view, dom, "Danner", "HTML")
+
+Rel(elm, server, "Sender forespørgsler", "HTTP/JSON")
+Rel(server, update, "Returnerer data", "HTTP/JSON")
+
+@enduml

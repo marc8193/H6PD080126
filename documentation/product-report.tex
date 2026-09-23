@@ -164,27 +164,72 @@ K13 & Operatøren kan kontrollere, om en fremvist billet er gyldig. & 1 \\
 
 \section{Arkitektur}
 
-\subsection{System}
+Systemets arkitektur beskrives med udgangspunkt i C4-modellen~\cite{c4_model}. C4-modellen
+beskriver softwarearkitektur gennem forskellige abstraktionsniveauer, herunder systemkontekst,
+containere, komponenter og kode. De følgende diagrammer anvender relevante niveauer fra
+C4-modellen til at beskrive systemets arkitektur.
 
-Systemarkitekturen er illustreret i figur~\ref{fig:system_architecture} med udgangspunkt i
-C4-modellen~\cite{c4_model}. C4-modellen beskriver softwarearkitektur gennem forskellige
-abstraktionsniveauer, herunder systemkontekst, containere, komponenter og kode.
+Systemarkitekturen er illustreret i figur~\ref{fig:system_architecture}. Figuren tager
+udgangspunkt i C4-modellens containerdiagram og viser systemets overordnede opdeling, de
+anvendte teknologier samt kommunikationen mellem de enkelte dele.
 
-Figuren tager udgangspunkt i C4-modellens containerdiagram og viser systemets overordnede
-opdeling, de anvendte teknologier samt kommunikationen mellem de enkelte dele. Systemet
-består af en Elm-baseret klient, en Python-baseret server og en SQLite-database.
+Systemet består af en Elm-baseret klient, en Python-baseret server og en SQLite-database.
 
 \subsection{Klient}
 
-% Udarbejd diagram som viser arkitekturen af klienten
+Klientarkitekturen er illustreret i figur~\ref{fig:client_architecture}. Klienten er opbygget
+efter The Elm Architecture~\cite{elm_architecture}, som opdeler applikationen i tre centrale
+dele: Model, View og Update.
+
+Model repræsenterer applikationens aktuelle tilstand og indeholder de data, som klienten
+arbejder med. View danner brugergrænsefladen på baggrund af denne tilstand og producerer
+beskeder som reaktion på brugerens handlinger. Disse beskeder behandles af Update, som på
+baggrund af den nuværende tilstand producerer en ny tilstand samt eventuelle kommandoer til
+eksempelvis kommunikation med serveren.
+
+Denne opbygning giver en ensrettet datastrøm, hvor brugerens handlinger og data modtaget
+gennem API'et behandles af Update, som opdaterer Model. View danner herefter
+brugergrænsefladen ud fra den opdaterede Model.
 
 \subsection{Server}
 
-% Udarbejd diagram som viser arkitekturen af serveren
+Serverarkitekturen er illustreret i figur~\ref{fig:server_architecture}. Serveren er opdelt i
+tre centrale komponenter: API, Validering og Data. API-komponenten udgør grænsefladen
+mellem klienten og serveren og modtager forespørgsler via HTTP.
 
-\subsection{Deployment- og drift}
+Data fra forespørgsler sendes videre til Validering, som kontrollerer, at de modtagne data er
+gyldige. De validerede data sendes herefter til Data, som danner de nødvendige
+SQL-forespørgsler og kommunikerer med SQLite-databasen.
 
-% Udarbejd diagram som viser hvordan deployment- og drift kunne se ud
+Resultater fra databasen behandles af Data og sendes tilbage til API-komponenten. API'et
+danner herefter et HTTP-svar, som returneres til klienten. Denne opdeling adskiller
+håndteringen af HTTP-kommunikation, validering og databaseadgang i separate komponenter.
+
+\subsection{Database}
+
+Databasens opbygning er illustreret i figur~\ref{fig:database-model}. Databasen er
+implementeret i SQLite, som anvendes som det underliggende databasesystem. Diagrammet
+beskriver derfor databasens opbygning og ikke SQLite-systemets interne arkitektur.
+
+Datamodellen er opdelt i tabeller, som repræsenterer systemets entiteter og deres
+relationer. Relationerne mellem tabellerne etableres ved hjælp af primær- og fremmednøgler,
+som forbinder de relaterede data.
+
+\subsection{Drift}
+
+Ved videreudvikling af produktet kunne driften struktureres ved hjælp af Docker.
+Klienten og serveren kunne containeriseres, så applikationen og dens afhængigheder kan
+afvikles i et ensartet miljø.
+
+Der kunne samtidig etableres separate test-, staging- og produktionsmiljøer. Nye versioner
+kunne først bygges og afprøves i testmiljøet og derefter overføres til staging, hvor den
+samlede løsning kan testes inden udgivelse. En godkendt version kunne herefter udgives som
+en release og sættes i drift i produktionsmiljøet. Den foreslåede driftsarkitektur er illustreret i
+figur~\ref{fig:pipeline-architecture}.
+
+Denne opbygning ville gøre det muligt at automatisere dele af processen gennem CI/CD og
+sikre, at den samme version af produktet overføres gennem de forskellige miljøer frem mod
+produktion.
 
 \section{Brugergrænseflade}
 
@@ -192,6 +237,11 @@ Brugergrænsefladen er udarbejdet med et ensartet visuelt udtryk på tværs af k
 Designet tager udgangspunkt i en fast typografisk skala og et begrænset farvetema.
 
 \subsection{Design}
+
+Udformningen af brugergrænsefladen tager udgangspunkt i principperne præsenteret i
+videoen~\cite{five_minutes_design}. Principperne er anvendt ved valg af blandt andet
+typografi, størrelsesforhold og farvetema med henblik på at skabe et enkelt og ensartet
+visuelt udtryk samt et ensartet brugsmønster.
 
 \subsubsection{Typografi}
 
@@ -220,8 +270,6 @@ skriftvægt er 400, og linjehøjden er 1,6.
   \label{tab:typography}
 \end{table}
 
-\newpage
-
 \subsubsection{Farvetema}
 
 Brugergrænsefladen anvender et begrænset farvetema, som består af en tekstfarve,
@@ -248,6 +296,8 @@ baggrundsfarve samt primære, sekundære og accentfarver.
 
 Skitserne i figur~\ref{fig:ui_mockups} viser den planlagte opbygning af klientens centrale
 visninger og danner grundlag for den efterfølgende implementering.
+
+\newpage
 
 \section{Teknologi beskrivelse}
 
@@ -322,13 +372,13 @@ For at bygge og køre systemet kræves et Linux-baseret operativsystem samt føl
 \subsection{Bygning}
 
 Systemet bygges ved hjælp af scriptet \texttt{build.sh}. Scriptet køres med argumentet
-\texttt{docs}, \texttt{client} eller \texttt{test}, afhængigt af hvilken del af systemet der
-ønskes bygget eller testet.
+\texttt{client}, \texttt{test}, \texttt{docs} eller \texttt{all} afhængigt af hvilken del
+af systemet der ønskes bygget eller testet.
 
 \begin{verbatim}
-$ ./build.sh docs    # Bygger dokumentationen
 $ ./build.sh client  # Bygger klienten
 $ ./build.sh test    # Kører tests
+$ ./build.sh docs    # Bygger dokumentationen
 $ ./build.sh all     # Bygger alle dele
 $ ./build.sh         # Bygger alle dele
 \end{verbatim}
@@ -339,6 +389,8 @@ Klienten skal serveres via en HTTP-server. Til dette kan eksempelvis Pythons ind
 HTTP-server, Nginx eller en tilsvarende webserver anvendes.
 
 Serveren startes ved at køre \texttt{source/server.py} som et almindeligt Python-program.
+
+Projektet kan afprøves på \url{https://marc8193.haukelid.dk}.
 
 \section{Kendte begrænsninger}
 
@@ -358,9 +410,61 @@ bliver overreserveret.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.5\textwidth]{system-architecture.png}
+  \includegraphics[
+    width=\textwidth,
+    height=0.9\textheight,
+    keepaspectratio
+  ]{system-architecture.png}
   \caption{Systemarkitekturen}
   \label{fig:system_architecture}
+\end{figure}
+
+\section{Klient-arkitektur}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[
+    width=\textwidth,
+    height=0.9\textheight,
+    keepaspectratio
+  ]{client-architecture.png}
+  \caption{Klient-arkitektur}
+  \label{fig:client_architecture}
+\end{figure}
+
+\section{Server-arkitektur}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[
+    width=\textwidth,
+    height=0.9\textheight,
+    keepaspectratio
+  ]{server-architecture.png}
+  \caption{Server-arkitektur}
+  \label{fig:server_architecture}
+\end{figure}
+
+\section{Database-arkitektur}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{database-model.png}
+  \caption{Database model}
+  \label{fig:database-model}
+\end{figure}
+
+\section{Drifts-arkitektur}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[
+    width=\textwidth,
+    height=0.9\textheight,
+    keepaspectratio
+  ]{deployment-architecture.png}
+  \caption{Drifts-arkitektur}
+  \label{fig:deployment-architecture}
 \end{figure}
 
 \section{Skitser af brugergrænsefladen}

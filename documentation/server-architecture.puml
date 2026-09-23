@@ -1,0 +1,25 @@
+@startuml
+skinparam dpi 400
+
+!include <C4/C4_Component>
+
+Container(client, "Klient", "", "Brugergrænseflade")
+
+Container_Boundary(server, "Server") {
+  Component(api, "API", "Flask", "Modtager HTTP-forespørgsler")
+  Component(validation, "Validering", "Python", "Validerer HTTP-forespørgsler")
+  Component(data, "Data", "Python", "Danner SQL-forespørgsler og behandler resultater")
+}
+
+ContainerDb(database, "Database", "SQLite", "Gemmer systemets data")
+
+Rel(client, api, "Sender forespørgsler", "HTTP/JSON")
+Rel(api, validation, "Sender data til validering")
+Rel(validation, data, "Sender validerede data")
+Rel(data, database, "Sender forespørgsler", "SQL")
+
+Rel(database, data, "Returnerer data")
+Rel(data, api, "Returnerer data")
+Rel(api, client, "Returnerer svar", "HTTP/JSON")
+
+@enduml
