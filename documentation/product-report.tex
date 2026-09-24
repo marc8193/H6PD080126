@@ -211,25 +211,24 @@ Databasens opbygning er illustreret i figur~\ref{fig:database-model}. Databasen 
 implementeret i SQLite, som anvendes som det underliggende databasesystem. Diagrammet
 beskriver derfor databasens opbygning og ikke SQLite-systemets interne arkitektur.
 
-Datamodellen er opdelt i tabeller, som repræsenterer systemets entiteter og deres
+Databasemodellen er opdelt i tabeller, som repræsenterer systemets entiteter og deres
 relationer. Relationerne mellem tabellerne etableres ved hjælp af primær- og fremmednøgler,
 som forbinder de relaterede data.
 
 \subsection{Drift}
 
 Ved videreudvikling af produktet kunne driften struktureres ved hjælp af Docker.
-Klienten og serveren kunne containeriseres, så applikationen og dens afhængigheder kan
+Klienten og serveren kunne køres i en container, så applikationen og dens afhængigheder kan
 afvikles i et ensartet miljø.
 
 Der kunne samtidig etableres separate test-, staging- og produktionsmiljøer. Nye versioner
 kunne først bygges og afprøves i testmiljøet og derefter overføres til staging, hvor den
 samlede løsning kan testes inden udgivelse. En godkendt version kunne herefter udgives som
 en release og sættes i drift i produktionsmiljøet. Den foreslåede driftsarkitektur er illustreret i
-figur~\ref{fig:pipeline-architecture}.
+figur~\ref{fig:deployment-architecture}.
 
-Denne opbygning ville gøre det muligt at automatisere dele af processen gennem CI/CD og
-sikre, at den samme version af produktet overføres gennem de forskellige miljøer frem mod
-produktion.
+Denne opbygning ville gøre det muligt at automatisere dele af processen og sikre,
+at den samme version af produktet overføres gennem de forskellige miljøer frem mod produktion.
 
 \section{Brugergrænseflade}
 
@@ -461,7 +460,7 @@ bliver overreserveret.
   \centering
   \includegraphics[
     width=\textwidth,
-    height=0.9\textheight,
+    height=0.6\textheight,
     keepaspectratio
   ]{deployment-architecture.png}
   \caption{Drifts-arkitektur}
