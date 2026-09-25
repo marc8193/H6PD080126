@@ -42,7 +42,7 @@ if [[ "${all:-0}" == "1" || "${docs:-0}" == "1" ]]; then
     export TEXINPUTS="$project_root/documentation:$project_root/asset:"
     export BIBINPUTS="$project_root/documentation:"
 
-    report_files=("process-report" "product-report")
+    report_files=("process-report" "product-report" "presentation")
     for file in "${report_files[@]}"; do
       pdflatex -interaction=nonstopmode "$project_root/documentation/$file.tex"
       biber "$file"
