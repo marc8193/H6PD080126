@@ -19,6 +19,10 @@
 ]{biblatex}
 
 % --- Links ----------------------------------------------------------------------------------------
-\usepackage[hidelinks]{hyperref}
+\makeatletter
+\@ifpackageloaded{hyperref}
+  {\hypersetup{hidelinks}}
+  {\usepackage[hidelinks]{hyperref}}
+\makeatother
 
 \addbibresource{shared.bib}

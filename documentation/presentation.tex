@@ -2,6 +2,8 @@
 
 \input{preamble.tex}
 
+\addbibresource{presentation.bib}
+
 \title{Data og Design}
 \author{\student}
 \date{30. september 2026}
@@ -15,39 +17,105 @@
 \begin{frame}{Indhold}
   \begin{itemize}
     \item Motivation
-    \item Fakta
-    \item Afgrænsning
-    \item Hastighed
+    \item Begrænsning
+    \item Egenskaber
+    \item Ydeevne
     \item Holdbarhed
-    \item Læsbarhed
+    \item Sikkerhed
+    \item Brugervenlighed
     \item Konklusion
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Motivation}
+  \begin{itemize}
+    \item Et godt design danner grundlag for et godt produkt
+    \item Men hvad karakteriserer et godt design?
+    \item Designfilosofier som Clean, SOLID og Onion forsøger at opstille principper
+    for godt design
+
+    \item Designfilosofier er oftest subjektive
+    \item Hvordan kan godt design gøres konkret og målbart?
+  \end{itemize}
 \end{frame}
 
-\begin{frame}{Fakta}
+\begin{frame}{Begrænsning}
+  \begin{itemize}
+    \item Eksisterende projekter er vanskelige at sammenligne direkte
+    \item Forskelle i størrelse, kompleksitet og afhængigheder
+    \item Forskellige bygge- og testprocesser
+    \item Forskellig grad af parallelisering
+  \end{itemize}
 \end{frame}
 
-\begin{frame}{Afgrænsning}
-% Design kan vurderes ud fra flere egenskaber, herunder hastighed og holdbarhed.
-% På grund af præsentationens begrænsede tid fokuseres der på holdbarhed.
+\begin{frame}{Egenskaber}
+  \begin{itemize}
+    \item Design med formål
+    \item Egenskaber gør formålet målbart
+    \item Design udarbejdes efter målbare egenskaber
+    \item Skulptur vs. maleri~\cite{tigerstyle}
+      \begin{itemize}
+        \item Skulptur -- eksisterende løsninger formes til formålet
+        \item Maleri -- nye løsninger males med de ønskede farver (egenskaber) til formålet
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Ydeevne}
+  \begin{itemize}
+    \item Hvor godt systemet udnytter tid og ressourcer
+    \item Afhænger af domænets behov
+      \begin{itemize}
+        \item Børshandel -- Lav latenstid for at følge markedets frekvens
+        \item Smartphones -- Lavt ressourceforbrug for længere batterilevetid
+        \item Konferencekald -- Høj kapacitet for mange samtidige deltagere
+      \end{itemize}
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Holdbarhed}
-% Fejl og debugging
+  \begin{itemize}
+    \item Hvor godt systemet fungerer og kan vedligeholdes over tid
+    \item Pålidelighed -- Fejlhåndtering og debugging
+    \item Forståelighed -- Læsbarhed og gennemskueligt design
+    \item Videreudvikling -- Modulært design
+    \item Kan måles gennem udviklertilfredshed, antal fejl og gennemsnitlig løsningstid
+  \end{itemize}
 \end{frame}
 
-\begin{frame}{Holdbarhed}
-% Videreudvikling og ændringer
+\begin{frame}{Sikkerhed}
+  \begin{itemize}
+    \item Hvor godt systemet beskytter data og funktionalitet
+    \item Fortrolighed -- Sikker kommunikation
+    \item Integritet -- Validering og beskyttelse af ændringer
+    \item Tilgængelighed -- Replikering
+    \item Kan måles gennem databrud, datatab og oppetid~\cite{nist_cia}
+  \end{itemize}
 \end{frame}
 
-\begin{frame}{Holdbarhed}
-% AI
+\begin{frame}{Brugervenlighed}
+  \begin{itemize}
+    \item Hvor godt brugeren kan anvende og forstå systemet
+    \item Anvendelse -- Hvor nemt brugeren kan udføre sit formål
+    \item Forståelse -- Hvor nemt brugeren kan forstå systemets tilstand
+    \item Kan måles gennem brugertest, brugeradfærd og forretningsresultater
+    \item 0,1 sekunder hurtigere indlæsning gav målbare forbedringer
+    ~\cite{milliseconds_make_millions}
+
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Konklusion}
+  \begin{itemize}
+    \item Godt design afhænger af formålet
+    \item Formålet kan konkretiseres gennem målbare egenskaber
+    \item Designvalg forbedrer nogle egenskaber på bekostning af andre
+    \item Designfilosofier er værktøjer, ikke mål i sig selv
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Referencer}
+  \printbibliography[heading=none]
 \end{frame}
 
 \end{document}
