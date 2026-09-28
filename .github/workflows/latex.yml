@@ -4,7 +4,6 @@ permissions:
   contents: write
 
 on:
-  push:
   release:
     types: [published]
 
@@ -40,16 +39,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build/process-report.pdf
-            build/product-report.pdf
-            build/presentation.pdf
-
-      - name: Upload PDFs
-        if: github.event_name == 'push'
-        uses: actions/upload-artifact@v4
-        with:
-          name: documentation
-          path: |
             build/process-report.pdf
             build/product-report.pdf
             build/presentation.pdf
